@@ -188,11 +188,28 @@ class _GameBoardState extends State<GameBoard> {
     return SafeArea(
       child: Scaffold(
         appBar: AppBar(
-          title: Text(
-            "CHESS WARS",
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-            ),
+          backgroundColor: appBarColor,
+          title: Row(
+            children: [
+              Text(
+                "CHESS ",
+                style: TextStyle(
+                  fontFamily: "Changa",
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  fontSize: 25,
+                ),
+              ),
+              Text(
+                "WARS",
+                style: TextStyle(
+                  fontFamily: "Changa",
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                  fontSize: 25,
+                ),
+              ),
+            ],
           ),
         ),
         backgroundColor: backgroundColor,

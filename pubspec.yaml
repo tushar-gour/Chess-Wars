@@ -83,11 +83,11 @@ flutter:
   fonts:
     - family: Changa
       fonts:
-        - asset: assets/fonts/Changa.tff
+        - asset: assets/fonts/Changa.ttf
 
     - family: Roboto
       fonts:
-        - asset: assets/fonts/Roboto.tff
+        - asset: assets/fonts/Roboto.ttf
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/custom-fonts/#from-packages
