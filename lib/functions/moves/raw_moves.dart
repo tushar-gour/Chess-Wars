@@ -1,5 +1,6 @@
 import 'package:chess/components/piece.dart';
 import 'package:chess/functions/helpers.dart';
+import 'package:chess/functions/moves/adjacent_king.dart';
 
 List<List<int>> getRawMoves(
   List<List<ChessPiece?>> board,
@@ -183,6 +184,7 @@ List<List<int>> getRawMoves(
         int newCol = col + move[1];
 
         if (!isInBoard(newRow, newCol)) continue;
+        if (isKingInAdjacent(board, [newRow, newCol], piece)) continue;
 
         if (board[newRow][newCol] != null) {
           if (board[newRow][newCol]!.isWhite != piece.isWhite) {

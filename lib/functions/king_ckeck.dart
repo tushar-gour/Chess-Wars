@@ -1,9 +1,9 @@
 import 'package:chess/components/piece.dart';
 import 'package:chess/functions/helpers.dart';
 
-bool isAlreadyInAttacker(List<List<int>> attackers, List<int> toCheck) {
+bool isAlreadyInAttacker(List<List<int>> attackers, int row, int col) {
   for (var pair in attackers) {
-    if (pair[0] == toCheck[0] && pair[1] == toCheck[1]) return true;
+    if (pair[0] == row && pair[1] == col) return true;
   }
 
   return false;
@@ -59,7 +59,7 @@ List<List<int>> isKingInCheck(
       if (!isInBoard(newRow, newCol)) break;
 
       if (board[newRow][newCol] != null) {
-        if (!isAlreadyInAttacker(attacking_pieces, [newRow, newCol]) &&
+        if (!isAlreadyInAttacker(attacking_pieces, newRow, newCol) &&
             board[newRow][newCol]!.isWhite != kingPiece.isWhite &&
             board[newRow][newCol]!.type == ChessPieceType.rook) {
           attacking_pieces.add([newRow, newCol]); // can kill
@@ -90,7 +90,7 @@ List<List<int>> isKingInCheck(
     if (!isInBoard(newRow, newCol)) continue;
 
     if (board[newRow][newCol] != null) {
-      if (!isAlreadyInAttacker(attacking_pieces, [newRow, newCol]) &&
+      if (!isAlreadyInAttacker(attacking_pieces, newRow, newCol) &&
           board[newRow][newCol]!.isWhite != kingPiece.isWhite &&
           board[newRow][newCol]!.type == ChessPieceType.knight) {
         attacking_pieces.add([newRow, newCol]); // can kill
@@ -116,7 +116,7 @@ List<List<int>> isKingInCheck(
       if (!isInBoard(newRow, newCol)) break;
 
       if (board[newRow][newCol] != null) {
-        if (!isAlreadyInAttacker(attacking_pieces, [newRow, newCol]) &&
+        if (!isAlreadyInAttacker(attacking_pieces, newRow, newCol) &&
             board[newRow][newCol]!.isWhite != kingPiece.isWhite &&
             board[newRow][newCol]!.type == ChessPieceType.bishop) {
           attacking_pieces.add([newRow, newCol]); // can kill
@@ -134,7 +134,7 @@ List<List<int>> isKingInCheck(
     [1, 0], // down
     [0, -1], // left
     [0, 1], // right
-    [-1, -1], // up eft
+    [-1, -1], // up left
     [-1, 1], // up right
     [1, -1], // down left
     [1, 1], // down right
@@ -149,7 +149,7 @@ List<List<int>> isKingInCheck(
       if (!isInBoard(newRow, newCol)) break;
 
       if (board[newRow][newCol] != null) {
-        if (!isAlreadyInAttacker(attacking_pieces, [newRow, newCol]) &&
+        if (!isAlreadyInAttacker(attacking_pieces, newRow, newCol) &&
             board[newRow][newCol]!.isWhite != kingPiece.isWhite &&
             board[newRow][newCol]!.type == ChessPieceType.queen) {
           attacking_pieces.add([newRow, newCol]); // can kill

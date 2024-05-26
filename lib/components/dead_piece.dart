@@ -13,8 +13,8 @@ class DeadPiece extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(5),
-      margin: const EdgeInsets.all(2),
+      padding: const EdgeInsets.all(7),
+      margin: const EdgeInsets.all(5),
       color: const Color.fromARGB(100, 130, 130, 130),
       child: Image.asset(
         imagePath,

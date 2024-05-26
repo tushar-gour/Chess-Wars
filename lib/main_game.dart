@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:chess/components/dead_piece.dart';
 import 'package:chess/components/piece.dart';
 import 'package:chess/components/tile.dart';
@@ -5,8 +7,11 @@ import 'package:chess/functions/helpers.dart';
 import 'package:chess/functions/king_ckeck.dart';
 import 'package:chess/functions/moves/real_moves.dart';
 import 'package:chess/functions/new_board.dart';
+import 'package:chess/functions/time_format.dart';
 import 'package:chess/values/colors.dart';
 import 'package:flutter/material.dart';
+
+const CHESS_TIME = 1800;
 
 class GameBoard extends StatefulWidget {
   const GameBoard({super.key});
@@ -27,17 +32,72 @@ class _GameBoardState extends State<GameBoard> {
 
   bool isWhiteKingInCheck = false;
   bool isBlackKingInCheck = false;
-
   bool isWhiteTurn = true;
+  bool isGameStarted = false;
+
   ChessPiece? selectedPiece;
+
   List<int> selectedCord = [-1, -1];
   List<int> whiteKingCord = [7, 3];
   List<int> blackKingCord = [0, 4];
+
+  int whiteTime = CHESS_TIME;
+  int blackTime = CHESS_TIME;
+
+  Timer? _timer;
 
   @override
   void initState() {
     super.initState();
     _initializeBoard();
+  }
+
+  void timeCounter() {
+    _timer = Timer.periodic(
+      Duration(seconds: 1),
+      (timer) {
+        setState(() {
+          if (isGameStarted) {
+            if (isWhiteTurn) {
+              whiteTime -= 1;
+            } else {
+              blackTime -= 1;
+            }
+
+            if (whiteTime <= 0 || blackTime <= 0) {
+              // TODO end game
+              timer.cancel();
+              _timer?.cancel();
+            }
+          }
+        });
+      },
+    );
+  }
+
+  void resetGame() {
+    setState(() {
+      isGameStarted = false;
+      selectedPiece = null;
+      isWhiteTurn = true;
+
+      selectedCord = [-1, -1];
+      whiteKingCord = [7, 3];
+      blackKingCord = [0, 4];
+
+      valid_moves.clear();
+      blacks_killed.clear();
+      whites_killed.clear();
+      whiteKingAttackers.clear();
+      blackKingAttackers.clear();
+
+      whiteTime = CHESS_TIME;
+      blackTime = CHESS_TIME;
+
+      _timer?.cancel();
+
+      _initializeBoard();
+    });
   }
 
   ChessPiece? getPieceFromCoordinates(List<int> coordinates) {
@@ -60,7 +120,7 @@ class _GameBoardState extends State<GameBoard> {
     });
   }
 
-  void calculateRawValidMoves() {
+  void calculateValidMoves() {
     clearValidMoves();
 
     setState(() {
@@ -117,6 +177,13 @@ class _GameBoardState extends State<GameBoard> {
           else -> nothing
     */
 
+    if (!isGameStarted) {
+      setState(() {
+        isGameStarted = true;
+        timeCounter();
+      });
+    }
+
     final row = tileCoordinates[0];
     final col = tileCoordinates[1];
     final piece = getPieceFromCoordinates(tileCoordinates);
@@ -126,7 +193,7 @@ class _GameBoardState extends State<GameBoard> {
         if (piece.isWhite == selectedPiece!.isWhite) {
           selectedPiece = piece;
           selectedCord = [row, col];
-          calculateRawValidMoves();
+          calculateValidMoves();
         } else {
           // Kill / Capture the piece
 
@@ -150,7 +217,7 @@ class _GameBoardState extends State<GameBoard> {
         if (piece.isWhite == isWhiteTurn) {
           selectedPiece = piece;
           selectedCord = [row, col];
-          calculateRawValidMoves();
+          calculateValidMoves();
         }
       }
     } else {
@@ -185,10 +252,22 @@ class _GameBoardState extends State<GameBoard> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+
     return SafeArea(
       child: Scaffold(
+        backgroundColor: backgroundColor,
         appBar: AppBar(
           backgroundColor: appBarColor,
+          actions: [
+            IconButton(
+              onPressed: resetGame,
+              icon: Icon(
+                Icons.replay,
+                color: Colors.white,
+              ),
+            ),
+          ],
           title: Row(
             children: [
               Text(
@@ -206,17 +285,17 @@ class _GameBoardState extends State<GameBoard> {
                   fontFamily: "Changa",
                   fontWeight: FontWeight.bold,
                   color: Colors.black,
-                  fontSize: 25,
+                  fontSize: 28,
                 ),
               ),
             ],
           ),
         ),
-        backgroundColor: backgroundColor,
         body: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            Expanded(
+            SizedBox(
+              height: 100,
               child: GridView.builder(
                 physics: const NeverScrollableScrollPhysics(),
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -229,8 +308,17 @@ class _GameBoardState extends State<GameBoard> {
                 ),
               ),
             ),
-            Expanded(
-              flex: 3,
+            Text(
+              formattedTime(blackTime),
+              style: TextStyle(
+                color: Colors.white,
+                fontFamily: "Changa",
+                fontSize: 20,
+              ),
+            ),
+            SizedBox(
+              width: screenWidth,
+              height: screenWidth,
               child: GridView.builder(
                 physics: const NeverScrollableScrollPhysics(),
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -282,7 +370,16 @@ class _GameBoardState extends State<GameBoard> {
                 },
               ),
             ),
-            Expanded(
+            Text(
+              formattedTime(whiteTime),
+              style: TextStyle(
+                color: Colors.white,
+                fontFamily: "Changa",
+                fontSize: 20,
+              ),
+            ),
+            SizedBox(
+              height: 100,
               child: GridView.builder(
                 physics: const NeverScrollableScrollPhysics(),
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(

@@ -57,6 +57,7 @@ List<List<int>> getRealMoves(
     )) {
       realMoves.add(cord);
     }
+    continue;
   }
 
   return realMoves;
