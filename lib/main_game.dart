@@ -187,6 +187,14 @@ class _GameBoardState extends State<GameBoard> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
+        appBar: AppBar(
+          title: Text(
+            "CHESS WARS",
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
         backgroundColor: backgroundColor,
         body: Column(
           mainAxisAlignment: MainAxisAlignment.center,
