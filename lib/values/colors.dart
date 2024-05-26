@@ -17,3 +17,4 @@ final whitePieceColor = Colors.grey.shade200;
 final validMoveTileColor = Colors.green[200];
 
 const appBarColor = Color.fromARGB(255, 129, 79, 46);
+const dialogueColor = Color.fromARGB(255, 131, 87, 59);

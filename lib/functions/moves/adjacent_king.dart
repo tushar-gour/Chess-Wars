@@ -4,8 +4,10 @@ import 'package:chess/functions/helpers.dart';
 bool isKingInAdjacent(
   List<List<ChessPiece?>> board,
   List<int> tileCord,
-  ChessPiece kingPiece,
+  ChessPiece? kingPiece,
 ) {
+  if (kingPiece == null) return false;
+
   final moves = [
     [-1, 0], // up
     [1, 0], // down

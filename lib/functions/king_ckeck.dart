@@ -61,7 +61,8 @@ List<List<int>> isKingInCheck(
       if (board[newRow][newCol] != null) {
         if (!isAlreadyInAttacker(attacking_pieces, newRow, newCol) &&
             board[newRow][newCol]!.isWhite != kingPiece.isWhite &&
-            board[newRow][newCol]!.type == ChessPieceType.rook) {
+            (board[newRow][newCol]!.type == ChessPieceType.rook ||
+                board[newRow][newCol]!.type == ChessPieceType.queen)) {
           attacking_pieces.add([newRow, newCol]); // can kill
         }
         break; // blocked
@@ -118,7 +119,8 @@ List<List<int>> isKingInCheck(
       if (board[newRow][newCol] != null) {
         if (!isAlreadyInAttacker(attacking_pieces, newRow, newCol) &&
             board[newRow][newCol]!.isWhite != kingPiece.isWhite &&
-            board[newRow][newCol]!.type == ChessPieceType.bishop) {
+            (board[newRow][newCol]!.type == ChessPieceType.bishop ||
+                board[newRow][newCol]!.type == ChessPieceType.queen)) {
           attacking_pieces.add([newRow, newCol]); // can kill
         }
         break; // blocked
@@ -127,40 +129,6 @@ List<List<int>> isKingInCheck(
       i++;
     }
   }
-
-  // QUEEN ( bishop + rook )
-  final queenMoves = [
-    [-1, 0], // up
-    [1, 0], // down
-    [0, -1], // left
-    [0, 1], // right
-    [-1, -1], // up left
-    [-1, 1], // up right
-    [1, -1], // down left
-    [1, 1], // down right
-  ];
-
-  for (var move in queenMoves) {
-    int i = 1;
-    while (true) {
-      int newRow = row + i * move[0];
-      int newCol = col + i * move[1];
-
-      if (!isInBoard(newRow, newCol)) break;
-
-      if (board[newRow][newCol] != null) {
-        if (!isAlreadyInAttacker(attacking_pieces, newRow, newCol) &&
-            board[newRow][newCol]!.isWhite != kingPiece.isWhite &&
-            board[newRow][newCol]!.type == ChessPieceType.queen) {
-          attacking_pieces.add([newRow, newCol]); // can kill
-        }
-        break; // blocked
-      }
-
-      i++;
-    }
-  }
-  print(attacking_pieces);
 
   return attacking_pieces;
 }

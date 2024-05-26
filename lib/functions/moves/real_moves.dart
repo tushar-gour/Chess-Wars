@@ -1,5 +1,6 @@
 import 'package:chess/components/piece.dart';
 import 'package:chess/functions/king_ckeck.dart';
+import 'package:chess/functions/moves/adjacent_king.dart';
 import 'package:chess/functions/moves/raw_moves.dart';
 
 bool canMove(
@@ -31,6 +32,16 @@ bool canMove(
   return kingAttackers.isEmpty;
 }
 
+int getIndexFromMove(List<int> m, List<List<int>> rawMoves) {
+  for (int i = 0; i < rawMoves.length; i++) {
+    if (rawMoves[i][0] == m[0] && rawMoves[i][1] == m[1]) {
+      return i;
+    }
+  }
+
+  return -1;
+}
+
 List<List<int>> getRealMoves(
   List<List<ChessPiece?>> board,
   ChessPiece? selectedPiece,
@@ -40,18 +51,38 @@ List<List<int>> getRealMoves(
 ) {
   List<List<int>> realMoves = [];
 
-  final List<List<int>> rawMoves = getRawMoves(
+  List<List<int>> rawMoves = getRawMoves(
     board,
     selectedPiece,
     selectedCord,
   );
+
+  if (selectedPiece!.type == ChessPieceType.king) {
+    List<int> indexes = [];
+
+    for (var move in rawMoves) {
+      if (isKingInAdjacent(board, move, selectedPiece)) {
+        int toRemove = getIndexFromMove(move, rawMoves);
+        if (toRemove != -1) indexes.add(toRemove);
+      }
+    }
+
+    List<List<int>> tempRawMoves = [];
+
+    for (int i = 0; i < rawMoves.length; i++) {
+      if (indexes.contains(i)) continue;
+      tempRawMoves.add([rawMoves[i][0], rawMoves[i][1]]);
+    }
+
+    rawMoves = tempRawMoves;
+  }
 
   for (var cord in rawMoves) {
     if (canMove(
       board,
       selectedCord,
       cord,
-      selectedPiece!.isWhite,
+      selectedPiece.isWhite,
       selectedPiece,
       kingPosition,
     )) {

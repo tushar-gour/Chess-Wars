@@ -65,9 +65,9 @@ class _GameBoardState extends State<GameBoard> {
             }
 
             if (whiteTime <= 0 || blackTime <= 0) {
-              // TODO end game
               timer.cancel();
               _timer?.cancel();
+              showTimeUpDialogue();
             }
           }
         });
@@ -98,6 +98,126 @@ class _GameBoardState extends State<GameBoard> {
 
       _initializeBoard();
     });
+  }
+
+  void showTimeUpDialogue() {
+    showDialog(
+      context: context,
+      builder: (context) => Container(
+        decoration: BoxDecoration(
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.25),
+              spreadRadius: 5,
+              blurRadius: 7,
+              offset: Offset(0, 3),
+            ),
+          ],
+        ),
+        child: AlertDialog(
+          backgroundColor: dialogueColor,
+          title: Center(
+            child: Text(
+              "TIME UP !!",
+              style: TextStyle(
+                color: lightTileColor,
+                fontFamily: "Changa",
+              ),
+            ),
+          ),
+          content: InkWell(
+            onTap: () {
+              Navigator.pop(context);
+              resetGame();
+            },
+            child: Ink(
+              width: 150,
+              height: 40,
+              decoration: BoxDecoration(
+                color: darkTileColor,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Center(
+                child: Text(
+                  'New Game',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontFamily: "Changa",
+                    fontSize: 20,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void showResetDialogue() {
+    showDialog(
+      context: context,
+      builder: (context) => Container(
+        decoration: BoxDecoration(
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.25),
+              spreadRadius: 5,
+              blurRadius: 7,
+              offset: Offset(0, 3),
+            ),
+          ],
+        ),
+        child: AlertDialog(
+          backgroundColor: dialogueColor,
+          title: Center(
+            child: Text(
+              "Reset Game?",
+              style: TextStyle(
+                color: lightTileColor,
+                fontFamily: "Changa",
+              ),
+            ),
+          ),
+          actions: [
+            Center(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      resetGame();
+                    },
+                    child: Text(
+                      'Reset',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontFamily: "Changa",
+                        fontSize: 20,
+                      ),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                    child: Text(
+                      'Cancel',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontFamily: "Changa",
+                        fontSize: 20,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            )
+          ],
+        ),
+      ),
+    );
   }
 
   ChessPiece? getPieceFromCoordinates(List<int> coordinates) {
@@ -261,7 +381,7 @@ class _GameBoardState extends State<GameBoard> {
           backgroundColor: appBarColor,
           actions: [
             IconButton(
-              onPressed: resetGame,
+              onPressed: showResetDialogue,
               icon: Icon(
                 Icons.replay,
                 color: Colors.white,
@@ -308,12 +428,46 @@ class _GameBoardState extends State<GameBoard> {
                 ),
               ),
             ),
-            Text(
-              formattedTime(blackTime),
-              style: TextStyle(
-                color: Colors.white,
-                fontFamily: "Changa",
-                fontSize: 20,
+            SizedBox(
+              height: 30,
+              child: Row(
+                children: [
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(15, 0, 15, 0),
+                    child: InkWell(
+                      onTap: () {},
+                      child: Ink(
+                        width: 200,
+                        decoration: BoxDecoration(
+                          color: appBarColor,
+                          borderRadius: BorderRadius.circular(7),
+                        ),
+                        child: Center(
+                          child: Text(
+                            'Surrender',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontFamily: "Changa",
+                              fontSize: 20,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: Center(
+                      child: Text(
+                        formattedTime(blackTime),
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontFamily: "Changa",
+                          fontSize: 20,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
             SizedBox(
@@ -370,12 +524,46 @@ class _GameBoardState extends State<GameBoard> {
                 },
               ),
             ),
-            Text(
-              formattedTime(whiteTime),
-              style: TextStyle(
-                color: Colors.white,
-                fontFamily: "Changa",
-                fontSize: 20,
+            SizedBox(
+              height: 30,
+              child: Row(
+                children: [
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(15, 0, 15, 0),
+                    child: InkWell(
+                      onTap: () {},
+                      child: Ink(
+                        width: 200,
+                        decoration: BoxDecoration(
+                          color: appBarColor,
+                          borderRadius: BorderRadius.circular(7),
+                        ),
+                        child: Center(
+                          child: Text(
+                            'Surrender',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontFamily: "Changa",
+                              fontSize: 20,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: Center(
+                      child: Text(
+                        formattedTime(whiteTime),
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontFamily: "Changa",
+                          fontSize: 20,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
             SizedBox(

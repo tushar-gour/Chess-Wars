@@ -1,10 +1,9 @@
 String formattedTime(int seconds) {
-  int hours = seconds ~/ 60;
-  int minutes = hours ~/ 60;
+  int minutes = seconds ~/ 60;
+  int remainingSeconds = seconds % 60;
 
-  // Format the string with leading zeros
-  String formattedHours = hours.toString().padLeft(2, '0');
   String formattedMinutes = minutes.toString().padLeft(2, '0');
+  String formattedSeconds = remainingSeconds.toString().padLeft(2, '0');
 
-  return '$formattedHours : $formattedMinutes';
+  return '$formattedMinutes : $formattedSeconds';
 }
