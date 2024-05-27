@@ -5,7 +5,6 @@ bool isAlreadyInAttacker(List<List<int>> attackers, int row, int col) {
   for (var pair in attackers) {
     if (pair[0] == row && pair[1] == col) return true;
   }
-
   return false;
 }
 
@@ -19,35 +18,32 @@ List<List<int>> isKingInCheck(
 
   if (kingPiece == null) return attacking_pieces;
 
-  // check if the king is in sight of any piece on board
-  // i.e., check for every piece in chess if their next move is killing king or not
-  // i.e., check for every piece raw movement and check if their next valid move has tile of king
-
   final direction = kingPiece.isWhite ? -1 : 1;
 
-  // check if King is being attacked by:
-
+  // Check if King is being attacked by:
   // PAWN ( Diagonally )
-  if (isInBoard(row + direction, col - 1) &&
-      board[row + direction][col - 1] != null &&
-      board[row + direction][col - 1]!.isWhite != kingPiece.isWhite &&
-      board[row + direction][col - 1]!.type == ChessPieceType.pawn) {
-    attacking_pieces.add([row + direction, col - 1]);
+  final pawnAttacks = [
+    [row + direction, col - 1],
+    [row + direction, col + 1],
+  ];
+
+  for (var attack in pawnAttacks) {
+    if (isInBoard(attack[0], attack[1])) {
+      final attacker = board[attack[0]][attack[1]];
+      if (attacker != null &&
+          attacker.isWhite != kingPiece.isWhite &&
+          attacker.type == ChessPieceType.pawn) {
+        attacking_pieces.add(attack);
+      }
+    }
   }
 
-  if (isInBoard(row + direction, col + 1) &&
-      board[row + direction][col + 1] != null &&
-      board[row + direction][col + 1]!.isWhite != kingPiece.isWhite &&
-      board[row + direction][col + 1]!.type == ChessPieceType.pawn) {
-    attacking_pieces.add([row + direction, col + 1]);
-  }
-
-  // ROOK ( up down left right )
+  // ROOK and QUEEN (up down left right)
   final rookMoves = [
     [-1, 0], // up
     [1, 0], // down
     [0, -1], // left
-    [0, 1] // right
+    [0, 1], // right
   ];
 
   for (var move in rookMoves) {
@@ -58,12 +54,13 @@ List<List<int>> isKingInCheck(
 
       if (!isInBoard(newRow, newCol)) break;
 
-      if (board[newRow][newCol] != null) {
+      final attacker = board[newRow][newCol];
+      if (attacker != null) {
         if (!isAlreadyInAttacker(attacking_pieces, newRow, newCol) &&
-            board[newRow][newCol]!.isWhite != kingPiece.isWhite &&
-            (board[newRow][newCol]!.type == ChessPieceType.rook ||
-                board[newRow][newCol]!.type == ChessPieceType.queen)) {
-          attacking_pieces.add([newRow, newCol]); // can kill
+            attacker.isWhite != kingPiece.isWhite &&
+            (attacker.type == ChessPieceType.rook ||
+                attacker.type == ChessPieceType.queen)) {
+          attacking_pieces.add([newRow, newCol]);
         }
         break; // blocked
       }
@@ -72,7 +69,7 @@ List<List<int>> isKingInCheck(
     }
   }
 
-  // KNIGHT ( 2 and 1 )
+  // KNIGHT (2 and 1)
   final knightMoves = [
     [-2, -1],
     [-2, 1],
@@ -85,22 +82,21 @@ List<List<int>> isKingInCheck(
   ];
 
   for (var move in knightMoves) {
-    int newRow = row + move[0] * direction;
-    int newCol = col + move[1] * direction;
+    int newRow = row + move[0];
+    int newCol = col + move[1];
 
-    if (!isInBoard(newRow, newCol)) continue;
-
-    if (board[newRow][newCol] != null) {
-      if (!isAlreadyInAttacker(attacking_pieces, newRow, newCol) &&
-          board[newRow][newCol]!.isWhite != kingPiece.isWhite &&
-          board[newRow][newCol]!.type == ChessPieceType.knight) {
-        attacking_pieces.add([newRow, newCol]); // can kill
+    if (isInBoard(newRow, newCol)) {
+      final attacker = board[newRow][newCol];
+      if (attacker != null &&
+          !isAlreadyInAttacker(attacking_pieces, newRow, newCol) &&
+          attacker.isWhite != kingPiece.isWhite &&
+          attacker.type == ChessPieceType.knight) {
+        attacking_pieces.add([newRow, newCol]);
       }
-      continue; // blocked
     }
   }
 
-  // BISHOPS ( top_left top_right bottom_left bottom_right )
+  // BISHOP and QUEEN (diagonally)
   final bishopMoves = [
     [-1, -1], // up left
     [-1, 1], // up right
@@ -116,12 +112,13 @@ List<List<int>> isKingInCheck(
 
       if (!isInBoard(newRow, newCol)) break;
 
-      if (board[newRow][newCol] != null) {
+      final attacker = board[newRow][newCol];
+      if (attacker != null) {
         if (!isAlreadyInAttacker(attacking_pieces, newRow, newCol) &&
-            board[newRow][newCol]!.isWhite != kingPiece.isWhite &&
-            (board[newRow][newCol]!.type == ChessPieceType.bishop ||
-                board[newRow][newCol]!.type == ChessPieceType.queen)) {
-          attacking_pieces.add([newRow, newCol]); // can kill
+            attacker.isWhite != kingPiece.isWhite &&
+            (attacker.type == ChessPieceType.bishop ||
+                attacker.type == ChessPieceType.queen)) {
+          attacking_pieces.add([newRow, newCol]);
         }
         break; // blocked
       }

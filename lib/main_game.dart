@@ -311,51 +311,58 @@ class _GameBoardState extends State<GameBoard> {
     if (piece != null) {
       if (selectedPiece != null) {
         if (piece.isWhite == selectedPiece!.isWhite) {
-          selectedPiece = piece;
-          selectedCord = [row, col];
-          calculateValidMoves();
+          // Select a new piece of the same color
+          setState(() {
+            selectedPiece = piece;
+            selectedCord = [row, col];
+            calculateValidMoves();
+          });
         } else {
-          // Kill / Capture the piece
-
+          // Capture the piece
           if (isValidMove(row, col)) {
-            if (piece.isWhite) {
-              whites_killed.add(piece);
-            } else {
-              blacks_killed.add(piece);
-            }
+            setState(() {
+              if (piece.isWhite) {
+                whites_killed.add(piece);
+              } else {
+                blacks_killed.add(piece);
+              }
 
-            board[row][col] = selectedPiece;
-            board[selectedCord[0]][selectedCord[1]] = null;
+              board[row][col] = selectedPiece;
+              board[selectedCord[0]][selectedCord[1]] = null;
 
-            isWhiteTurn = !isWhiteTurn;
+              isWhiteTurn = !isWhiteTurn;
 
-            checkKingInCheck();
-            removeSelectedPiece();
+              checkKingInCheck();
+              removeSelectedPiece();
+            });
           }
         }
       } else {
+        // Select a piece if it's the player's turn
         if (piece.isWhite == isWhiteTurn) {
-          selectedPiece = piece;
-          selectedCord = [row, col];
-          calculateValidMoves();
+          setState(() {
+            selectedPiece = piece;
+            selectedCord = [row, col];
+            calculateValidMoves();
+          });
         }
       }
     } else {
-      if (selectedPiece != null) {
-        // move piece
-        // if this move is a valid move
-
-        if (isValidMove(row, col)) {
+      // Move the piece to an empty tile
+      if (selectedPiece != null && isValidMove(row, col)) {
+        setState(() {
           board[row][col] = selectedPiece;
           board[selectedCord[0]][selectedCord[1]] = null;
           isWhiteTurn = !isWhiteTurn;
           checkKingInCheck();
-        }
-        removeSelectedPiece();
+          removeSelectedPiece();
+        });
+      } else {
+        setState(() {
+          removeSelectedPiece();
+        });
       }
     }
-
-    setState(() {});
   }
 
   bool isKingAttacker(int row, int col) {
