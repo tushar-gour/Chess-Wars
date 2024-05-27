@@ -265,17 +265,19 @@ class _GameBoardState extends State<GameBoard> {
 
   void checkKingInCheck() {
     setState(() {
-      whiteKingAttackers = isKingInCheck(
-        board,
-        whiteKingCord[0],
-        whiteKingCord[1],
-      );
-
-      blackKingAttackers = isKingInCheck(
-        board,
-        blackKingCord[0],
-        blackKingCord[1],
-      );
+      if (isWhiteTurn) {
+        whiteKingAttackers = isKingInCheck(
+          board,
+          whiteKingCord[0],
+          whiteKingCord[1],
+        );
+      } else {
+        blackKingAttackers = isKingInCheck(
+          board,
+          blackKingCord[0],
+          blackKingCord[1],
+        );
+      }
     });
   }
 
@@ -330,6 +332,16 @@ class _GameBoardState extends State<GameBoard> {
               board[row][col] = selectedPiece;
               board[selectedCord[0]][selectedCord[1]] = null;
 
+              if (selectedPiece!.type == ChessPieceType.king) {
+                selectedPiece!.isWhite
+                    ? {
+                        whiteKingCord = [row, col],
+                      }
+                    : {
+                        blackKingCord = [row, col],
+                      };
+              }
+
               isWhiteTurn = !isWhiteTurn;
 
               checkKingInCheck();
@@ -369,7 +381,6 @@ class _GameBoardState extends State<GameBoard> {
     for (var pair in whiteKingAttackers) {
       if (pair[0] == row && pair[1] == col) return true;
     }
-
     for (var pair in blackKingAttackers) {
       if (pair[0] == row && pair[1] == col) return true;
     }
@@ -494,7 +505,7 @@ class _GameBoardState extends State<GameBoard> {
                       myCord[1] == selectedCord[1];
                   bool validMove = false;
                   bool isInAttack = false;
-                  bool isKingAttaked = false;
+                  bool isKingAttakedOrIsAttacker = false;
 
                   for (var pair in valid_moves) {
                     if (pair[0] == myCord[0] && pair[1] == myCord[1]) {
@@ -508,22 +519,23 @@ class _GameBoardState extends State<GameBoard> {
                   }
 
                   if (myPiece != null && myPiece.type == ChessPieceType.king) {
-                    isKingAttaked = myPiece.isWhite
+                    isKingAttakedOrIsAttacker = myPiece.isWhite
                         ? whiteKingAttackers.isNotEmpty
                         : blackKingAttackers.isNotEmpty;
                   }
 
-                  if (!isKingAttaked) {
-                    isKingAttaked = isKingAttacker(
+                  if (myPiece != null && !isKingAttakedOrIsAttacker) {
+                    isKingAttakedOrIsAttacker = isKingAttacker(
                       myCord[0],
                       myCord[1],
                     );
                   }
+
                   return BoardTile(
                     isDarkTile: isDarkTile(index),
                     piece: myPiece,
                     isSelected: isSelected,
-                    isKingAttaked: isKingAttaked,
+                    isKingAttaked: isKingAttakedOrIsAttacker,
                     isInAttack: isInAttack,
                     isValidMove: validMove,
                     onTap: () => onTileTap(myCord),

@@ -50,7 +50,6 @@ List<List<int>> getRealMoves(
   List<int> kingPosition,
 ) {
   List<List<int>> realMoves = [];
-
   List<List<int>> rawMoves = getRawMoves(
     board,
     selectedPiece,
@@ -59,21 +58,17 @@ List<List<int>> getRealMoves(
 
   if (selectedPiece!.type == ChessPieceType.king) {
     List<int> indexes = [];
-
     for (var move in rawMoves) {
       if (isKingInAdjacent(board, move, selectedPiece)) {
         int toRemove = getIndexFromMove(move, rawMoves);
         if (toRemove != -1) indexes.add(toRemove);
       }
     }
-
     List<List<int>> tempRawMoves = [];
-
     for (int i = 0; i < rawMoves.length; i++) {
       if (indexes.contains(i)) continue;
       tempRawMoves.add([rawMoves[i][0], rawMoves[i][1]]);
     }
-
     rawMoves = tempRawMoves;
   }
 
@@ -88,7 +83,6 @@ List<List<int>> getRealMoves(
     )) {
       realMoves.add(cord);
     }
-    continue;
   }
 
   return realMoves;
