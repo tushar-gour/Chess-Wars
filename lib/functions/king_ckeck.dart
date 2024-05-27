@@ -23,6 +23,7 @@ List<List<int>> isKingInCheck(
   for (var attack in pawnAttacks) {
     if (isInBoard(attack[0], attack[1])) {
       final attacker = board[attack[0]][attack[1]];
+      
       if (attacker != null &&
           attacker.isWhite != kingPiece.isWhite &&
           attacker.type == ChessPieceType.pawn) {

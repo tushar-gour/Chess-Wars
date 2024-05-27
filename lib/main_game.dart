@@ -282,6 +282,7 @@ class _GameBoardState extends State<GameBoard> {
   }
 
   void onTileTap(List<int> tileCoordinates) {
+    print('tapped');
     /* ---- LOGIC ----
       asuming white's turn
 
@@ -317,8 +318,9 @@ class _GameBoardState extends State<GameBoard> {
           setState(() {
             selectedPiece = piece;
             selectedCord = [row, col];
-            calculateValidMoves();
           });
+
+          calculateValidMoves();
         } else {
           // Capture the piece
           if (isValidMove(row, col)) {
@@ -343,10 +345,10 @@ class _GameBoardState extends State<GameBoard> {
               }
 
               isWhiteTurn = !isWhiteTurn;
-
-              checkKingInCheck();
-              removeSelectedPiece();
             });
+
+            checkKingInCheck();
+            removeSelectedPiece();
           }
         }
       } else {
@@ -355,8 +357,9 @@ class _GameBoardState extends State<GameBoard> {
           setState(() {
             selectedPiece = piece;
             selectedCord = [row, col];
-            calculateValidMoves();
           });
+
+          calculateValidMoves();
         }
       }
     } else {
@@ -366,13 +369,12 @@ class _GameBoardState extends State<GameBoard> {
           board[row][col] = selectedPiece;
           board[selectedCord[0]][selectedCord[1]] = null;
           isWhiteTurn = !isWhiteTurn;
-          checkKingInCheck();
-          removeSelectedPiece();
         });
+
+        checkKingInCheck();
+        removeSelectedPiece();
       } else {
-        setState(() {
-          removeSelectedPiece();
-        });
+        removeSelectedPiece();
       }
     }
   }
@@ -395,215 +397,213 @@ class _GameBoardState extends State<GameBoard> {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
 
-    return SafeArea(
-      child: Scaffold(
-        backgroundColor: backgroundColor,
-        appBar: AppBar(
-          backgroundColor: appBarColor,
-          actions: [
-            IconButton(
-              onPressed: showResetDialogue,
-              icon: Icon(
-                Icons.replay,
-                color: Colors.white,
-              ),
+    return Scaffold(
+      backgroundColor: backgroundColor,
+      appBar: AppBar(
+        backgroundColor: appBarColor,
+        actions: [
+          IconButton(
+            onPressed: showResetDialogue,
+            icon: Icon(
+              Icons.replay,
+              color: Colors.white,
             ),
-          ],
-          title: Row(
-            children: [
-              Text(
-                "CHESS ",
-                style: TextStyle(
-                  fontFamily: "Changa",
-                  fontWeight: FontWeight.bold,
-                  color: Colors.grey.shade200,
-                  fontSize: 25,
-                ),
-              ),
-              Text(
-                "WARS",
-                style: TextStyle(
-                  fontFamily: "Changa",
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                  fontSize: 25,
-                ),
-              ),
-            ],
           ),
-        ),
-        body: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
+        ],
+        title: Row(
           children: [
-            SizedBox(
-              height: 100,
-              child: GridView.builder(
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 8,
-                ),
-                itemCount: whites_killed.length,
-                itemBuilder: (ctx, index) => DeadPiece(
-                  imagePath: whites_killed[index].imagePath,
-                  isWhite: whites_killed[index].isWhite,
-                ),
+            Text(
+              "CHESS ",
+              style: TextStyle(
+                fontFamily: "Changa",
+                fontWeight: FontWeight.bold,
+                color: Colors.grey.shade200,
+                fontSize: 25,
               ),
             ),
-            SizedBox(
-              height: 30,
-              child: Row(
-                children: [
-                  Padding(
-                    padding: EdgeInsets.fromLTRB(15, 0, 15, 0),
-                    child: InkWell(
-                      onTap: () {},
-                      child: Ink(
-                        width: 200,
-                        decoration: BoxDecoration(
-                          color: appBarColor,
-                          borderRadius: BorderRadius.circular(7),
-                        ),
-                        child: Center(
-                          child: Text(
-                            'Surrender',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontFamily: "Changa",
-                              fontSize: 20,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: Center(
-                      child: Text(
-                        formattedTime(blackTime),
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontFamily: "Changa",
-                          fontSize: 20,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(
-              width: screenWidth,
-              height: screenWidth,
-              child: GridView.builder(
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 8,
-                ),
-                itemCount: 8 * 8,
-                itemBuilder: (ctx, index) {
-                  final myCord = getTileCoordinates(index);
-                  final myPiece = getPieceFromCoordinates(myCord);
-
-                  bool isSelected = myCord[0] == selectedCord[0] &&
-                      myCord[1] == selectedCord[1];
-                  bool validMove = false;
-                  bool isInAttack = false;
-                  bool isKingAttakedOrIsAttacker = false;
-
-                  for (var pair in valid_moves) {
-                    if (pair[0] == myCord[0] && pair[1] == myCord[1]) {
-                      validMove = true;
-                      if (board[pair[0]][pair[1]] != null &&
-                          board[pair[0]][pair[1]]!.isWhite == !isWhiteTurn) {
-                        isInAttack = true;
-                      }
-                      break;
-                    }
-                  }
-
-                  if (myPiece != null && myPiece.type == ChessPieceType.king) {
-                    isKingAttakedOrIsAttacker = myPiece.isWhite
-                        ? whiteKingAttackers.isNotEmpty
-                        : blackKingAttackers.isNotEmpty;
-                  }
-
-                  if (myPiece != null && !isKingAttakedOrIsAttacker) {
-                    isKingAttakedOrIsAttacker = isKingAttacker(
-                      myCord[0],
-                      myCord[1],
-                    );
-                  }
-
-                  return BoardTile(
-                    isDarkTile: isDarkTile(index),
-                    piece: myPiece,
-                    isSelected: isSelected,
-                    isKingAttaked: isKingAttakedOrIsAttacker,
-                    isInAttack: isInAttack,
-                    isValidMove: validMove,
-                    onTap: () => onTileTap(myCord),
-                  );
-                },
-              ),
-            ),
-            SizedBox(
-              height: 30,
-              child: Row(
-                children: [
-                  Padding(
-                    padding: EdgeInsets.fromLTRB(15, 0, 15, 0),
-                    child: InkWell(
-                      onTap: () {},
-                      child: Ink(
-                        width: 200,
-                        decoration: BoxDecoration(
-                          color: appBarColor,
-                          borderRadius: BorderRadius.circular(7),
-                        ),
-                        child: Center(
-                          child: Text(
-                            'Surrender',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontFamily: "Changa",
-                              fontSize: 20,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: Center(
-                      child: Text(
-                        formattedTime(whiteTime),
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontFamily: "Changa",
-                          fontSize: 20,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(
-              height: 100,
-              child: GridView.builder(
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 8,
-                ),
-                itemCount: blacks_killed.length,
-                itemBuilder: (ctx, index) => DeadPiece(
-                  imagePath: blacks_killed[index].imagePath,
-                  isWhite: blacks_killed[index].isWhite,
-                ),
+            Text(
+              "WARS",
+              style: TextStyle(
+                fontFamily: "Changa",
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+                fontSize: 25,
               ),
             ),
           ],
         ),
+      ),
+      body: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          SizedBox(
+            height: 100,
+            child: GridView.builder(
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 8,
+              ),
+              itemCount: whites_killed.length,
+              itemBuilder: (ctx, index) => DeadPiece(
+                imagePath: whites_killed[index].imagePath,
+                isWhite: whites_killed[index].isWhite,
+              ),
+            ),
+          ),
+          SizedBox(
+            height: 30,
+            child: Row(
+              children: [
+                Padding(
+                  padding: EdgeInsets.fromLTRB(15, 0, 15, 0),
+                  child: InkWell(
+                    onTap: () {},
+                    child: Ink(
+                      width: 200,
+                      decoration: BoxDecoration(
+                        color: appBarColor,
+                        borderRadius: BorderRadius.circular(7),
+                      ),
+                      child: Center(
+                        child: Text(
+                          'Surrender',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontFamily: "Changa",
+                            fontSize: 20,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Center(
+                    child: Text(
+                      formattedTime(blackTime),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontFamily: "Changa",
+                        fontSize: 20,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(
+            width: screenWidth,
+            height: screenWidth,
+            child: GridView.builder(
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 8,
+              ),
+              itemCount: 8 * 8,
+              itemBuilder: (ctx, index) {
+                final myCord = getTileCoordinates(index);
+                final myPiece = getPieceFromCoordinates(myCord);
+
+                bool isSelected = myCord[0] == selectedCord[0] &&
+                    myCord[1] == selectedCord[1];
+                bool validMove = false;
+                bool isInAttack = false;
+                bool isKingAttakedOrIsAttacker = false;
+
+                for (var pair in valid_moves) {
+                  if (pair[0] == myCord[0] && pair[1] == myCord[1]) {
+                    validMove = true;
+                    if (board[pair[0]][pair[1]] != null &&
+                        board[pair[0]][pair[1]]!.isWhite == !isWhiteTurn) {
+                      isInAttack = true;
+                    }
+                    break;
+                  }
+                }
+
+                if (myPiece != null && myPiece.type == ChessPieceType.king) {
+                  isKingAttakedOrIsAttacker = myPiece.isWhite
+                      ? whiteKingAttackers.isNotEmpty
+                      : blackKingAttackers.isNotEmpty;
+                }
+
+                if (myPiece != null && !isKingAttakedOrIsAttacker) {
+                  isKingAttakedOrIsAttacker = isKingAttacker(
+                    myCord[0],
+                    myCord[1],
+                  );
+                }
+
+                return BoardTile(
+                  isDarkTile: isDarkTile(index),
+                  piece: myPiece,
+                  isSelected: isSelected,
+                  isKingAttaked: isKingAttakedOrIsAttacker,
+                  isInAttack: isInAttack,
+                  isValidMove: validMove,
+                  onTap: () => onTileTap(myCord),
+                );
+              },
+            ),
+          ),
+          SizedBox(
+            height: 30,
+            child: Row(
+              children: [
+                Padding(
+                  padding: EdgeInsets.fromLTRB(15, 0, 15, 0),
+                  child: InkWell(
+                    onTap: () {},
+                    child: Ink(
+                      width: 200,
+                      decoration: BoxDecoration(
+                        color: appBarColor,
+                        borderRadius: BorderRadius.circular(7),
+                      ),
+                      child: Center(
+                        child: Text(
+                          'Surrender',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontFamily: "Changa",
+                            fontSize: 20,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Center(
+                    child: Text(
+                      formattedTime(whiteTime),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontFamily: "Changa",
+                        fontSize: 20,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(
+            height: 100,
+            child: GridView.builder(
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 8,
+              ),
+              itemCount: blacks_killed.length,
+              itemBuilder: (ctx, index) => DeadPiece(
+                imagePath: blacks_killed[index].imagePath,
+                isWhite: blacks_killed[index].isWhite,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
