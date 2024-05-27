@@ -11,6 +11,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    WidgetsFlutterBinding.ensureInitialized();
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: []);
 
     return MaterialApp(

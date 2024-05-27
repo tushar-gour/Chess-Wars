@@ -59,6 +59,7 @@ class _GameBoardState extends State<GameBoard> {
 
   void timeCounter() {
     _timer = Timer.periodic(Duration(seconds: 1), (timer) {
+      if (!mounted) return;
       if (!isGameStarted) {
         timer.cancel();
         return;
@@ -230,15 +231,21 @@ class _GameBoardState extends State<GameBoard> {
   }
 
   void calculateValidMoves() {
+    print('triggered');
     clearValidMoves();
+    print('cleared');
 
-    valid_moves = getRealMoves(
-      board,
-      selectedPiece,
-      selectedCord,
-      isWhiteTurn,
-      isWhiteTurn ? whiteKingCord : blackKingCord,
-    );
+    setState(() {
+      valid_moves = getRealMoves(
+        board,
+        selectedPiece,
+        selectedCord,
+        isWhiteTurn,
+        isWhiteTurn ? whiteKingCord : blackKingCord,
+      );
+    });
+
+    print('set new');
   }
 
   bool isValidMove(int row, int col) {
@@ -302,42 +309,42 @@ class _GameBoardState extends State<GameBoard> {
     final col = tileCoordinates[1];
     final piece = getPieceFromCoordinates(tileCoordinates);
 
-    if (piece != null) {
-      if (selectedPiece != null) {
-        if (piece.isWhite == selectedPiece!.isWhite) {
-          // Select a new piece
+    setState(() {
+      if (piece != null) {
+        if (selectedPiece != null) {
+          if (piece.isWhite == selectedPiece!.isWhite) {
+            // Select a new piece
+            selectedPiece = piece;
+            selectedCord = [row, col];
+            calculateValidMoves();
+          } else if (isValidMove(row, col)) {
+            // Capture the piece
+            (piece.isWhite ? whites_killed : blacks_killed).add(piece);
+            board[row][col] = selectedPiece;
+            board[selectedCord[0]][selectedCord[1]] = null;
+            updateKingPositionIfNeeded(row, col);
+            isWhiteTurn = !isWhiteTurn;
+            checkKingInCheck();
+            removeSelectedPiece();
+          }
+        } else if (piece.isWhite == isWhiteTurn) {
+          // Select a piece
           selectedPiece = piece;
           selectedCord = [row, col];
           calculateValidMoves();
-        } else if (isValidMove(row, col)) {
-          // Capture the piece
-          (piece.isWhite ? whites_killed : blacks_killed).add(piece);
-          board[row][col] = selectedPiece;
-          board[selectedCord[0]][selectedCord[1]] = null;
-          updateKingPositionIfNeeded(row, col);
-          isWhiteTurn = !isWhiteTurn;
-          checkKingInCheck();
-          removeSelectedPiece();
         }
-      } else if (piece.isWhite == isWhiteTurn) {
-        // Select a piece
-        selectedPiece = piece;
-        selectedCord = [row, col];
-        calculateValidMoves();
+      } else if (selectedPiece != null && isValidMove(row, col)) {
+        // Move the piece
+        board[row][col] = selectedPiece;
+        board[selectedCord[0]][selectedCord[1]] = null;
+        updateKingPositionIfNeeded(row, col);
+        isWhiteTurn = !isWhiteTurn;
+        checkKingInCheck();
+        removeSelectedPiece();
+      } else {
+        removeSelectedPiece();
       }
-    } else if (selectedPiece != null && isValidMove(row, col)) {
-      // Move the piece
-      board[row][col] = selectedPiece;
-      board[selectedCord[0]][selectedCord[1]] = null;
-      updateKingPositionIfNeeded(row, col);
-      isWhiteTurn = !isWhiteTurn;
-      checkKingInCheck();
-      removeSelectedPiece();
-    } else {
-      removeSelectedPiece();
-    }
-
-    setState(() {});
+    });
   }
 
   bool isKingAttacker(int row, int col) {
@@ -365,48 +372,50 @@ class _GameBoardState extends State<GameBoard> {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
 
-    return Scaffold(
-      backgroundColor: backgroundColor,
-      appBar: AppBar(
-        backgroundColor: appBarColor,
-        actions: [
-          IconButton(
-            onPressed: showResetDialogue,
-            icon: Icon(Icons.replay, color: Colors.white),
-          ),
-        ],
-        title: Row(
-          children: [
-            Text(
-              "CHESS ",
-              style: TextStyle(
-                fontFamily: "Changa",
-                fontWeight: FontWeight.bold,
-                color: Colors.grey.shade200,
-                fontSize: 25,
-              ),
-            ),
-            Text(
-              "WARS",
-              style: TextStyle(
-                fontFamily: "Changa",
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
-                fontSize: 25,
-              ),
+    return SafeArea(
+      child: Scaffold(
+        backgroundColor: backgroundColor,
+        appBar: AppBar(
+          backgroundColor: appBarColor,
+          actions: [
+            IconButton(
+              onPressed: showResetDialogue,
+              icon: Icon(Icons.replay, color: Colors.white),
             ),
           ],
+          title: Row(
+            children: [
+              Text(
+                "CHESS ",
+                style: TextStyle(
+                  fontFamily: "Changa",
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey.shade200,
+                  fontSize: 25,
+                ),
+              ),
+              Text(
+                "WARS",
+                style: TextStyle(
+                  fontFamily: "Changa",
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                  fontSize: 25,
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _buildDeadPiecesGrid(whites_killed),
-          _buildControlRow(blackTime, true),
-          _buildChessBoard(screenWidth),
-          _buildControlRow(whiteTime, false),
-          _buildDeadPiecesGrid(blacks_killed),
-        ],
+        body: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            _buildDeadPiecesGrid(whites_killed),
+            _buildControlRow(blackTime),
+            _buildChessBoard(screenWidth),
+            _buildControlRow(whiteTime),
+            _buildDeadPiecesGrid(blacks_killed),
+          ],
+        ),
       ),
     );
   }
@@ -428,7 +437,7 @@ class _GameBoardState extends State<GameBoard> {
     );
   }
 
-  Widget _buildControlRow(int time, bool isTopRow) {
+  Widget _buildControlRow(int time) {
     return SizedBox(
       height: 30,
       child: Row(

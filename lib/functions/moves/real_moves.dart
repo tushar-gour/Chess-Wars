@@ -59,29 +59,29 @@ List<List<int>> getRealMoves(
   );
 
   if (selectedPiece!.type == ChessPieceType.king) {
-    for (int i = rawMoves.length - 1; i >= 0; i--) {
-      if (isKingInAdjacent(board, rawMoves[i], selectedPiece)) {
-        rawMoves.removeAt(i);
-      }
-    }
-
-    // List<int> indexes = [];
-
-    // for (var move in rawMoves) {
-    //   if (isKingInAdjacent(board, move, selectedPiece)) {
-    //     int toRemove = getIndexFromMove(move, rawMoves);
-    //     if (toRemove != -1) indexes.add(toRemove);
+    // for (int i = 0; i < rawMoves.length; i++) {
+    //   if (isKingInAdjacent(board, rawMoves[i], selectedPiece)) {
+    //     rawMoves.removeAt(i);
     //   }
     // }
 
-    // List<List<int>> tempRawMoves = [];
+    List<int> indexes = [];
 
-    // for (int i = 0; i < rawMoves.length; i++) {
-    //   if (!indexes.contains(i))
-    //     tempRawMoves.add([rawMoves[i][0], rawMoves[i][1]]);
-    // }
+    for (var move in rawMoves) {
+      if (isKingInAdjacent(board, move, selectedPiece)) {
+        int toRemove = getIndexFromMove(move, rawMoves);
+        if (toRemove != -1) indexes.add(toRemove);
+      }
+    }
 
-    // rawMoves = tempRawMoves;
+    List<List<int>> tempRawMoves = [];
+
+    for (int i = 0; i < rawMoves.length; i++) {
+      if (!indexes.contains(i))
+        tempRawMoves.add([rawMoves[i][0], rawMoves[i][1]]);
+    }
+
+    rawMoves = tempRawMoves;
   }
 
   for (var cord in rawMoves) {
