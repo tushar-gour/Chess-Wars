@@ -70,13 +70,13 @@ class _GameBoardState extends State<GameBoard> {
         } else {
           blackTime -= 1;
         }
-
-        if (whiteTime <= 0 || blackTime <= 0) {
-          timer.cancel();
-          _timer?.cancel();
-          showTimeUpDialogue();
-        }
       });
+
+      if (whiteTime <= 0 || blackTime <= 0) {
+        timer.cancel();
+        _timer?.cancel();
+        showTimeUpDialogue();
+      }
     });
   }
 
