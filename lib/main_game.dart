@@ -378,12 +378,15 @@ class _GameBoardState extends State<GameBoard> {
   }
 
   bool isKingAttacker(int row, int col) {
-    for (var pair in whiteKingAttackers) {
-      if (pair[0] == row && pair[1] == col) return true;
-    }
-    for (var pair in blackKingAttackers) {
-      if (pair[0] == row && pair[1] == col) return true;
-    }
+    if (whiteKingAttackers.isNotEmpty)
+      for (var pair in whiteKingAttackers) {
+        if (pair[0] == row && pair[1] == col) return true;
+      }
+
+    if (blackKingAttackers.isNotEmpty)
+      for (var pair in blackKingAttackers) {
+        if (pair[0] == row && pair[1] == col) return true;
+      }
 
     return false;
   }
@@ -413,7 +416,7 @@ class _GameBoardState extends State<GameBoard> {
                 style: TextStyle(
                   fontFamily: "Changa",
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: Colors.grey.shade200,
                   fontSize: 25,
                 ),
               ),
@@ -423,7 +426,7 @@ class _GameBoardState extends State<GameBoard> {
                   fontFamily: "Changa",
                   fontWeight: FontWeight.bold,
                   color: Colors.black,
-                  fontSize: 28,
+                  fontSize: 25,
                 ),
               ),
             ],
