@@ -7,7 +7,6 @@ import 'package:chess/functions/helpers.dart';
 import 'package:chess/functions/king_ckeck.dart';
 import 'package:chess/functions/moves/real_moves.dart';
 import 'package:chess/functions/new_board.dart';
-import 'package:chess/functions/time_format.dart';
 import 'package:chess/values/colors.dart';
 import 'package:flutter/material.dart';
 
@@ -56,48 +55,23 @@ class _GameBoardState extends State<GameBoard> {
     _timer = Timer.periodic(
       Duration(seconds: 1),
       (timer) {
-        setState(() {
-          if (isGameStarted) {
+        if (isGameStarted) {
+          setState(() {
             if (isWhiteTurn) {
               whiteTime -= 1;
             } else {
               blackTime -= 1;
             }
+          });
 
-            if (whiteTime <= 0 || blackTime <= 0) {
-              timer.cancel();
-              _timer?.cancel();
-              showTimeUpDialogue();
-            }
+          if (whiteTime <= 0 || blackTime <= 0) {
+            timer.cancel();
+            _timer?.cancel();
+            showTimeUpDialogue();
           }
-        });
+        }
       },
     );
-  }
-
-  void resetGame() {
-    setState(() {
-      isGameStarted = false;
-      selectedPiece = null;
-      isWhiteTurn = true;
-
-      selectedCord = [-1, -1];
-      whiteKingCord = [7, 3];
-      blackKingCord = [0, 4];
-
-      valid_moves.clear();
-      blacks_killed.clear();
-      whites_killed.clear();
-      whiteKingAttackers.clear();
-      blackKingAttackers.clear();
-
-      whiteTime = CHESS_TIME;
-      blackTime = CHESS_TIME;
-
-      _timer?.cancel();
-
-      _initializeBoard();
-    });
   }
 
   void showTimeUpDialogue() {
@@ -128,7 +102,7 @@ class _GameBoardState extends State<GameBoard> {
           content: InkWell(
             onTap: () {
               Navigator.pop(context);
-              resetGame();
+              _initializeBoard();
             },
             child: Ink(
               width: 150,
@@ -187,7 +161,7 @@ class _GameBoardState extends State<GameBoard> {
                   TextButton(
                     onPressed: () {
                       Navigator.pop(context);
-                      resetGame();
+                      _initializeBoard();
                     },
                     child: Text(
                       'Reset',
@@ -226,6 +200,22 @@ class _GameBoardState extends State<GameBoard> {
 
   void _initializeBoard() {
     board = newBoard();
+    selectedPiece = null;
+    selectedCord = [-1, -1];
+    valid_moves.clear();
+    isWhiteTurn = true;
+    whiteKingCord = [7, 3];
+    blackKingCord = [0, 4];
+    isWhiteKingInCheck = false;
+    isBlackKingInCheck = false;
+    whites_killed.clear();
+    blacks_killed.clear();
+    whiteKingAttackers.clear();
+    blackKingAttackers.clear();
+  }
+
+  void clearValidMoves() {
+    valid_moves.clear();
   }
 
   void removeSelectedPiece() {
@@ -234,24 +224,16 @@ class _GameBoardState extends State<GameBoard> {
     clearValidMoves();
   }
 
-  void clearValidMoves() {
-    setState(() {
-      valid_moves.clear();
-    });
-  }
-
   void calculateValidMoves() {
     clearValidMoves();
 
-    setState(() {
-      valid_moves = getRealMoves(
-        board,
-        selectedPiece,
-        selectedCord,
-        isWhiteTurn,
-        isWhiteTurn ? whiteKingCord : blackKingCord,
-      );
-    });
+    valid_moves = getRealMoves(
+      board,
+      selectedPiece,
+      selectedCord,
+      isWhiteTurn,
+      isWhiteTurn ? whiteKingCord : blackKingCord,
+    );
   }
 
   bool isValidMove(int row, int col) {
@@ -264,25 +246,22 @@ class _GameBoardState extends State<GameBoard> {
   }
 
   void checkKingInCheck() {
-    setState(() {
-      if (isWhiteTurn) {
-        whiteKingAttackers = isKingInCheck(
-          board,
-          whiteKingCord[0],
-          whiteKingCord[1],
-        );
-      } else {
-        blackKingAttackers = isKingInCheck(
-          board,
-          blackKingCord[0],
-          blackKingCord[1],
-        );
-      }
-    });
+    if (isWhiteTurn) {
+      whiteKingAttackers = isKingInCheck(
+        board,
+        whiteKingCord[0],
+        whiteKingCord[1],
+      );
+    } else {
+      blackKingAttackers = isKingInCheck(
+        board,
+        blackKingCord[0],
+        blackKingCord[1],
+      );
+    }
   }
 
   void onTileTap(List<int> tileCoordinates) {
-    print('tapped');
     /* ---- LOGIC ----
       asuming white's turn
 
@@ -301,10 +280,8 @@ class _GameBoardState extends State<GameBoard> {
     */
 
     if (!isGameStarted) {
-      setState(() {
-        isGameStarted = true;
-        timeCounter();
-      });
+      isGameStarted = true;
+      timeCounter();
     }
 
     final row = tileCoordinates[0];
@@ -315,37 +292,33 @@ class _GameBoardState extends State<GameBoard> {
       if (selectedPiece != null) {
         if (piece.isWhite == selectedPiece!.isWhite) {
           // Select a new piece of the same color
-          setState(() {
-            selectedPiece = piece;
-            selectedCord = [row, col];
-          });
+          selectedPiece = piece;
+          selectedCord = [row, col];
 
           calculateValidMoves();
         } else {
           // Capture the piece
           if (isValidMove(row, col)) {
-            setState(() {
-              if (piece.isWhite) {
-                whites_killed.add(piece);
-              } else {
-                blacks_killed.add(piece);
-              }
+            if (piece.isWhite) {
+              whites_killed.add(piece);
+            } else {
+              blacks_killed.add(piece);
+            }
 
-              board[row][col] = selectedPiece;
-              board[selectedCord[0]][selectedCord[1]] = null;
+            board[row][col] = selectedPiece;
+            board[selectedCord[0]][selectedCord[1]] = null;
 
-              if (selectedPiece!.type == ChessPieceType.king) {
-                selectedPiece!.isWhite
-                    ? {
-                        whiteKingCord = [row, col],
-                      }
-                    : {
-                        blackKingCord = [row, col],
-                      };
-              }
+            if (selectedPiece!.type == ChessPieceType.king) {
+              selectedPiece!.isWhite
+                  ? {
+                      whiteKingCord = [row, col],
+                    }
+                  : {
+                      blackKingCord = [row, col],
+                    };
+            }
 
-              isWhiteTurn = !isWhiteTurn;
-            });
+            isWhiteTurn = !isWhiteTurn;
 
             checkKingInCheck();
             removeSelectedPiece();
@@ -354,10 +327,8 @@ class _GameBoardState extends State<GameBoard> {
       } else {
         // Select a piece if it's the player's turn
         if (piece.isWhite == isWhiteTurn) {
-          setState(() {
-            selectedPiece = piece;
-            selectedCord = [row, col];
-          });
+          selectedPiece = piece;
+          selectedCord = [row, col];
 
           calculateValidMoves();
         }
@@ -365,11 +336,9 @@ class _GameBoardState extends State<GameBoard> {
     } else {
       // Move the piece to an empty tile
       if (selectedPiece != null && isValidMove(row, col)) {
-        setState(() {
-          board[row][col] = selectedPiece;
-          board[selectedCord[0]][selectedCord[1]] = null;
-          isWhiteTurn = !isWhiteTurn;
-        });
+        board[row][col] = selectedPiece;
+        board[selectedCord[0]][selectedCord[1]] = null;
+        isWhiteTurn = !isWhiteTurn;
 
         checkKingInCheck();
         removeSelectedPiece();
@@ -377,6 +346,8 @@ class _GameBoardState extends State<GameBoard> {
         removeSelectedPiece();
       }
     }
+
+    setState(() {});
   }
 
   bool isKingAttacker(int row, int col) {

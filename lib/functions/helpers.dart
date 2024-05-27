@@ -13,3 +13,13 @@ bool isDarkTile(int index) {
 bool isInBoard(int row, int col) {
   return row >= 0 && row < 8 && col >= 0 && col < 8;
 }
+
+String formattedTime(int seconds) {
+  int minutes = seconds ~/ 60;
+  int remainingSeconds = seconds % 60;
+
+  String formattedMinutes = minutes.toString().padLeft(2, '0');
+  String formattedSeconds = remainingSeconds.toString().padLeft(2, '0');
+
+  return '$formattedMinutes : $formattedSeconds';
+}
