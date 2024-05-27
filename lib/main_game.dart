@@ -51,27 +51,32 @@ class _GameBoardState extends State<GameBoard> {
     _initializeBoard();
   }
 
-  void timeCounter() {
-    _timer = Timer.periodic(
-      Duration(seconds: 1),
-      (timer) {
-        if (isGameStarted) {
-          setState(() {
-            if (isWhiteTurn) {
-              whiteTime -= 1;
-            } else {
-              blackTime -= 1;
-            }
-          });
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
 
-          if (whiteTime <= 0 || blackTime <= 0) {
-            timer.cancel();
-            _timer?.cancel();
-            showTimeUpDialogue();
-          }
+  void timeCounter() {
+    _timer = Timer.periodic(Duration(seconds: 1), (timer) {
+      if (!isGameStarted) {
+        timer.cancel();
+        return;
+      }
+      setState(() {
+        if (isWhiteTurn) {
+          whiteTime -= 1;
+        } else {
+          blackTime -= 1;
         }
-      },
-    );
+
+        if (whiteTime <= 0 || blackTime <= 0) {
+          timer.cancel();
+          _timer?.cancel();
+          showTimeUpDialogue();
+        }
+      });
+    });
   }
 
   void showTimeUpDialogue() {
@@ -261,6 +266,16 @@ class _GameBoardState extends State<GameBoard> {
     }
   }
 
+  void updateKingPositionIfNeeded(int row, int col) {
+    if (selectedPiece!.type == ChessPieceType.king) {
+      if (selectedPiece!.isWhite) {
+        whiteKingCord = [row, col];
+      } else {
+        blackKingCord = [row, col];
+      }
+    }
+  }
+
   void onTileTap(List<int> tileCoordinates) {
     /* ---- LOGIC ----
       asuming white's turn
@@ -278,7 +293,6 @@ class _GameBoardState extends State<GameBoard> {
           if selected piece != null -> move piece
           else -> nothing
     */
-
     if (!isGameStarted) {
       isGameStarted = true;
       timeCounter();
@@ -291,60 +305,36 @@ class _GameBoardState extends State<GameBoard> {
     if (piece != null) {
       if (selectedPiece != null) {
         if (piece.isWhite == selectedPiece!.isWhite) {
-          // Select a new piece of the same color
+          // Select a new piece
           selectedPiece = piece;
           selectedCord = [row, col];
-
           calculateValidMoves();
-        } else {
+        } else if (isValidMove(row, col)) {
           // Capture the piece
-          if (isValidMove(row, col)) {
-            if (piece.isWhite) {
-              whites_killed.add(piece);
-            } else {
-              blacks_killed.add(piece);
-            }
-
-            board[row][col] = selectedPiece;
-            board[selectedCord[0]][selectedCord[1]] = null;
-
-            if (selectedPiece!.type == ChessPieceType.king) {
-              selectedPiece!.isWhite
-                  ? {
-                      whiteKingCord = [row, col],
-                    }
-                  : {
-                      blackKingCord = [row, col],
-                    };
-            }
-
-            isWhiteTurn = !isWhiteTurn;
-
-            checkKingInCheck();
-            removeSelectedPiece();
-          }
+          (piece.isWhite ? whites_killed : blacks_killed).add(piece);
+          board[row][col] = selectedPiece;
+          board[selectedCord[0]][selectedCord[1]] = null;
+          updateKingPositionIfNeeded(row, col);
+          isWhiteTurn = !isWhiteTurn;
+          checkKingInCheck();
+          removeSelectedPiece();
         }
-      } else {
-        // Select a piece if it's the player's turn
-        if (piece.isWhite == isWhiteTurn) {
-          selectedPiece = piece;
-          selectedCord = [row, col];
-
-          calculateValidMoves();
-        }
+      } else if (piece.isWhite == isWhiteTurn) {
+        // Select a piece
+        selectedPiece = piece;
+        selectedCord = [row, col];
+        calculateValidMoves();
       }
+    } else if (selectedPiece != null && isValidMove(row, col)) {
+      // Move the piece
+      board[row][col] = selectedPiece;
+      board[selectedCord[0]][selectedCord[1]] = null;
+      updateKingPositionIfNeeded(row, col);
+      isWhiteTurn = !isWhiteTurn;
+      checkKingInCheck();
+      removeSelectedPiece();
     } else {
-      // Move the piece to an empty tile
-      if (selectedPiece != null && isValidMove(row, col)) {
-        board[row][col] = selectedPiece;
-        board[selectedCord[0]][selectedCord[1]] = null;
-        isWhiteTurn = !isWhiteTurn;
-
-        checkKingInCheck();
-        removeSelectedPiece();
-      } else {
-        removeSelectedPiece();
-      }
+      removeSelectedPiece();
     }
 
     setState(() {});
@@ -364,6 +354,13 @@ class _GameBoardState extends State<GameBoard> {
     return false;
   }
 
+  bool isPieceInAttack(List<int> myCord) {
+    return valid_moves.any((move) =>
+        move[0] == myCord[0] &&
+        move[1] == myCord[1] &&
+        getPieceFromCoordinates(myCord) != null);
+  }
+
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -375,10 +372,7 @@ class _GameBoardState extends State<GameBoard> {
         actions: [
           IconButton(
             onPressed: showResetDialogue,
-            icon: Icon(
-              Icons.replay,
-              color: Colors.white,
-            ),
+            icon: Icon(Icons.replay, color: Colors.white),
           ),
         ],
         title: Row(
@@ -407,174 +401,103 @@ class _GameBoardState extends State<GameBoard> {
       body: Column(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          SizedBox(
-            height: 100,
-            child: GridView.builder(
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 8,
-              ),
-              itemCount: whites_killed.length,
-              itemBuilder: (ctx, index) => DeadPiece(
-                imagePath: whites_killed[index].imagePath,
-                isWhite: whites_killed[index].isWhite,
-              ),
-            ),
-          ),
-          SizedBox(
-            height: 30,
-            child: Row(
-              children: [
-                Padding(
-                  padding: EdgeInsets.fromLTRB(15, 0, 15, 0),
-                  child: InkWell(
-                    onTap: () {},
-                    child: Ink(
-                      width: 200,
-                      decoration: BoxDecoration(
-                        color: appBarColor,
-                        borderRadius: BorderRadius.circular(7),
-                      ),
-                      child: Center(
-                        child: Text(
-                          'Surrender',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontFamily: "Changa",
-                            fontSize: 20,
-                          ),
-                        ),
-                      ),
+          _buildDeadPiecesGrid(whites_killed),
+          _buildControlRow(blackTime, true),
+          _buildChessBoard(screenWidth),
+          _buildControlRow(whiteTime, false),
+          _buildDeadPiecesGrid(blacks_killed),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDeadPiecesGrid(List<ChessPiece> deadPieces) {
+    return SizedBox(
+      height: 100,
+      child: GridView.builder(
+        physics: const NeverScrollableScrollPhysics(),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 8,
+        ),
+        itemCount: deadPieces.length,
+        itemBuilder: (ctx, index) => DeadPiece(
+          imagePath: deadPieces[index].imagePath,
+          isWhite: deadPieces[index].isWhite,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildControlRow(int time, bool isTopRow) {
+    return SizedBox(
+      height: 30,
+      child: Row(
+        children: [
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 15),
+            child: InkWell(
+              onTap: () {},
+              child: Ink(
+                width: 200,
+                decoration: BoxDecoration(
+                  color: appBarColor,
+                  borderRadius: BorderRadius.circular(7),
+                ),
+                child: Center(
+                  child: Text(
+                    'Surrender',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontFamily: "Changa",
+                      fontSize: 20,
                     ),
                   ),
                 ),
-                Expanded(
-                  child: Center(
-                    child: Text(
-                      formattedTime(blackTime),
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontFamily: "Changa",
-                        fontSize: 20,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          SizedBox(
-            width: screenWidth,
-            height: screenWidth,
-            child: GridView.builder(
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 8,
               ),
-              itemCount: 8 * 8,
-              itemBuilder: (ctx, index) {
-                final myCord = getTileCoordinates(index);
-                final myPiece = getPieceFromCoordinates(myCord);
-
-                bool isSelected = myCord[0] == selectedCord[0] &&
-                    myCord[1] == selectedCord[1];
-                bool validMove = false;
-                bool isInAttack = false;
-                bool isKingAttakedOrIsAttacker = false;
-
-                for (var pair in valid_moves) {
-                  if (pair[0] == myCord[0] && pair[1] == myCord[1]) {
-                    validMove = true;
-                    if (board[pair[0]][pair[1]] != null &&
-                        board[pair[0]][pair[1]]!.isWhite == !isWhiteTurn) {
-                      isInAttack = true;
-                    }
-                    break;
-                  }
-                }
-
-                if (myPiece != null && myPiece.type == ChessPieceType.king) {
-                  isKingAttakedOrIsAttacker = myPiece.isWhite
-                      ? whiteKingAttackers.isNotEmpty
-                      : blackKingAttackers.isNotEmpty;
-                }
-
-                if (myPiece != null && !isKingAttakedOrIsAttacker) {
-                  isKingAttakedOrIsAttacker = isKingAttacker(
-                    myCord[0],
-                    myCord[1],
-                  );
-                }
-
-                return BoardTile(
-                  isDarkTile: isDarkTile(index),
-                  piece: myPiece,
-                  isSelected: isSelected,
-                  isKingAttaked: isKingAttakedOrIsAttacker,
-                  isInAttack: isInAttack,
-                  isValidMove: validMove,
-                  onTap: () => onTileTap(myCord),
-                );
-              },
             ),
           ),
-          SizedBox(
-            height: 30,
-            child: Row(
-              children: [
-                Padding(
-                  padding: EdgeInsets.fromLTRB(15, 0, 15, 0),
-                  child: InkWell(
-                    onTap: () {},
-                    child: Ink(
-                      width: 200,
-                      decoration: BoxDecoration(
-                        color: appBarColor,
-                        borderRadius: BorderRadius.circular(7),
-                      ),
-                      child: Center(
-                        child: Text(
-                          'Surrender',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontFamily: "Changa",
-                            fontSize: 20,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
+          Expanded(
+            child: Center(
+              child: Text(
+                formattedTime(time),
+                style: TextStyle(
+                  color: Colors.white,
+                  fontFamily: "Changa",
+                  fontSize: 20,
                 ),
-                Expanded(
-                  child: Center(
-                    child: Text(
-                      formattedTime(whiteTime),
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontFamily: "Changa",
-                        fontSize: 20,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          SizedBox(
-            height: 100,
-            child: GridView.builder(
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 8,
-              ),
-              itemCount: blacks_killed.length,
-              itemBuilder: (ctx, index) => DeadPiece(
-                imagePath: blacks_killed[index].imagePath,
-                isWhite: blacks_killed[index].isWhite,
               ),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildChessBoard(double screenWidth) {
+    return SizedBox(
+      width: screenWidth,
+      height: screenWidth,
+      child: GridView.builder(
+        physics: const NeverScrollableScrollPhysics(),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 8,
+        ),
+        itemCount: 8 * 8,
+        itemBuilder: (ctx, index) {
+          final myCord = getTileCoordinates(index);
+          final myPiece = getPieceFromCoordinates(myCord);
+
+          return BoardTile(
+            isDarkTile: isDarkTile(index),
+            piece: myPiece,
+            isSelected:
+                myCord[0] == selectedCord[0] && myCord[1] == selectedCord[1],
+            isKingAttaked: isKingAttacker(myCord[0], myCord[1]),
+            isInAttack: isPieceInAttack(myCord),
+            isValidMove: isValidMove(myCord[0], myCord[1]),
+            onTap: () => onTileTap(myCord),
+          );
+        },
       ),
     );
   }
