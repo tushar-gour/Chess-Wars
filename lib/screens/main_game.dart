@@ -2,14 +2,17 @@ import 'dart:async';
 import 'package:chess/components/dead_piece.dart';
 import 'package:chess/components/piece.dart';
 import 'package:chess/components/tile.dart';
+import 'package:chess/functions/check_checkmate.dart';
 import 'package:chess/functions/helpers.dart';
 import 'package:chess/functions/king_ckeck.dart';
 import 'package:chess/functions/moves/real_moves.dart';
 import 'package:chess/functions/new_board.dart';
+import 'package:chess/functions/sounds.dart';
 import 'package:chess/functions/two_king_remaining.dart';
 import 'package:chess/values/colors.dart';
 import 'package:chess/values/globals.dart';
 import 'package:flutter/material.dart';
+import 'dart:math' as math;
 
 class GameBoard extends StatefulWidget {
   const GameBoard({super.key});
@@ -188,6 +191,76 @@ class _GameBoardState extends State<GameBoard> {
     );
   }
 
+  void showCheckmateDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => Container(
+        decoration: BoxDecoration(
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.25),
+              spreadRadius: 5,
+              blurRadius: 7,
+              offset: Offset(0, 3),
+            ),
+          ],
+        ),
+        child: AlertDialog(
+          backgroundColor: dialogueColor,
+          title: Center(
+            child: Text(
+              "CHECKMATE !!",
+              style: TextStyle(
+                color: lightTileColor,
+                fontFamily: "Changa",
+              ),
+            ),
+          ),
+          content: SizedBox(
+            height: 100,
+            child: Column(
+              children: [
+                Text(
+                  '${isWhiteTurn ? 'Black' : 'White'} Won the match!',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontFamily: "Changa",
+                    fontSize: 20,
+                  ),
+                ),
+                SizedBox(height: 20),
+                InkWell(
+                  onTap: () {
+                    Navigator.pop(context);
+                    _initializeBoard();
+                  },
+                  child: Ink(
+                    width: 150,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: darkTileColor,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Center(
+                      child: Text(
+                        'New Game',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontFamily: "Changa",
+                          fontSize: 20,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   void showResetDialogue() {
     showDialog(
       context: context,
@@ -334,9 +407,15 @@ class _GameBoardState extends State<GameBoard> {
     }
   }
 
-  void checkIfRemainingAreKings() {
+  void checkGameOver() {
     if (isKingsRemaining(board)) {
       showTieDialogue();
+    } else if (isCheckmate(
+      board,
+      isWhiteTurn,
+      isWhiteTurn ? whiteKingCord : blackKingCord,
+    )) {
+      showCheckmateDialog();
     }
   }
 
@@ -365,6 +444,7 @@ class _GameBoardState extends State<GameBoard> {
     final row = tileCoordinates[0];
     final col = tileCoordinates[1];
     final piece = getPieceFromCoordinates(tileCoordinates);
+    playTileTapSound();
 
     setState(() {
       if (piece != null) {
@@ -383,7 +463,7 @@ class _GameBoardState extends State<GameBoard> {
             isWhiteTurn = !isWhiteTurn;
             checkKingInCheck();
             removeSelectedPiece();
-            checkIfRemainingAreKings();
+            checkGameOver();
           }
         } else if (piece.isWhite == isWhiteTurn) {
           // Select a piece
@@ -399,6 +479,7 @@ class _GameBoardState extends State<GameBoard> {
         isWhiteTurn = !isWhiteTurn;
         checkKingInCheck();
         removeSelectedPiece();
+        checkGameOver();
       } else {
         removeSelectedPiece();
       }
@@ -436,7 +517,6 @@ class _GameBoardState extends State<GameBoard> {
 
     return SafeArea(
       child: Scaffold(
-        backgroundColor: backgroundColor,
         appBar: AppBar(
           backgroundColor: appBarColor,
           actions: [
@@ -472,9 +552,9 @@ class _GameBoardState extends State<GameBoard> {
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             _buildDeadPiecesGrid(whites_killed),
-            _buildControlRow(blackTime),
+            _buildBlackControlRow(blackTime),
             _buildChessBoard(screenWidth),
-            _buildControlRow(whiteTime),
+            _buildWhiteControlRow(whiteTime),
             _buildDeadPiecesGrid(blacks_killed),
           ],
         ),
@@ -499,47 +579,38 @@ class _GameBoardState extends State<GameBoard> {
     );
   }
 
-  Widget _buildControlRow(int time) {
+  Widget _buildWhiteControlRow(int time) {
     return SizedBox(
       height: 30,
-      child: Row(
-        children: [
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 15),
-            child: InkWell(
-              onTap: () {},
-              child: Ink(
-                width: 200,
-                decoration: BoxDecoration(
-                  color: appBarColor,
-                  borderRadius: BorderRadius.circular(7),
-                ),
-                child: Center(
-                  child: Text(
-                    'Surrender',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontFamily: "Changa",
-                      fontSize: 20,
-                    ),
-                  ),
-                ),
-              ),
+      child: Center(
+        child: Text(
+          formattedTime(time),
+          style: TextStyle(
+            color: Colors.white,
+            fontFamily: "Changa",
+            fontSize: 20,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBlackControlRow(int time) {
+    return SizedBox(
+      height: 30,
+      child: Center(
+        child: Transform(
+          alignment: Alignment.center,
+          transform: Matrix4.rotationZ(math.pi),
+          child: Text(
+            formattedTime(time),
+            style: TextStyle(
+              color: Colors.white,
+              fontFamily: "Changa",
+              fontSize: 20,
             ),
           ),
-          Expanded(
-            child: Center(
-              child: Text(
-                formattedTime(time),
-                style: TextStyle(
-                  color: Colors.white,
-                  fontFamily: "Changa",
-                  fontSize: 20,
-                ),
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

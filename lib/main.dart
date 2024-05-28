@@ -1,6 +1,23 @@
 import 'package:chess/screens/menu.dart';
+import 'package:chess/values/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
+final mainAppTheme = ThemeData(
+  scaffoldBackgroundColor: backgroundColor,
+  appBarTheme: AppBarTheme(
+    color: appBarColor,
+    iconTheme: IconThemeData(
+      color: Colors.white,
+    ),
+    titleTextStyle: TextStyle(
+      fontFamily: "Changa",
+      fontWeight: FontWeight.bold,
+      color: Colors.grey.shade200,
+      fontSize: 25,
+    ),
+  ),
+);
 
 void main() {
   runApp(const MyApp());
@@ -16,11 +33,8 @@ class MyApp extends StatelessWidget {
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
+      theme: mainAppTheme,
       title: 'Chess Wars',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
       home: MenuScreen(),
     );
   }

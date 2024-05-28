@@ -1,6 +1,7 @@
 import 'package:chess/components/piece.dart';
 import 'package:chess/values/colors.dart';
 import 'package:flutter/material.dart';
+import 'dart:math' as math;
 
 class BoardTile extends StatelessWidget {
   final bool isDarkTile;
@@ -102,10 +103,23 @@ class BoardTile extends StatelessWidget {
               width: double.maxFinite,
               height: double.maxFinite,
               child: piece != null
-                  ? Image.asset(
-                      piece!.imagePath,
-                      color: piece!.isWhite ? whitePieceColor : blackPieceColor,
-                    )
+                  ? piece!.isWhite
+                      ? Image.asset(
+                          piece!.imagePath,
+                          color: piece!.isWhite
+                              ? whitePieceColor
+                              : blackPieceColor,
+                        )
+                      : Transform(
+                          alignment: Alignment.center,
+                          transform: Matrix4.rotationZ(math.pi),
+                          child: Image.asset(
+                            piece!.imagePath,
+                            color: piece!.isWhite
+                                ? whitePieceColor
+                                : blackPieceColor,
+                          ),
+                        )
                   : null,
             ),
             Container(

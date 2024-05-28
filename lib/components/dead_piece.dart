@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:math' as math;
 
 class DeadPiece extends StatelessWidget {
   final String imagePath;
@@ -16,10 +17,19 @@ class DeadPiece extends StatelessWidget {
       padding: const EdgeInsets.all(7),
       margin: const EdgeInsets.all(5),
       color: const Color.fromARGB(100, 130, 130, 130),
-      child: Image.asset(
-        imagePath,
-        color: isWhite ? Colors.white : Colors.black,
-      ),
+      child: isWhite
+          ? Transform(
+              alignment: Alignment.center,
+              transform: Matrix4.rotationZ(math.pi),
+              child: Image.asset(
+                imagePath,
+                color: isWhite ? Colors.white : Colors.black,
+              ),
+            )
+          : Image.asset(
+              imagePath,
+              color: isWhite ? Colors.white : Colors.black,
+            ),
     );
   }
 }
