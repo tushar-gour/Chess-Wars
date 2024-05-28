@@ -60,23 +60,24 @@ class _GameBoardState extends State<GameBoard> {
   void timeCounter() {
     _timer = Timer.periodic(Duration(seconds: 1), (timer) {
       if (!mounted) return;
-      if (!isGameStarted) {
-        timer.cancel();
-        return;
-      }
       setState(() {
+        if (!isGameStarted) {
+          timer.cancel();
+          return;
+        }
+
         if (isWhiteTurn) {
           whiteTime -= 1;
         } else {
           blackTime -= 1;
         }
-      });
 
-      if (whiteTime <= 0 || blackTime <= 0) {
-        timer.cancel();
-        _timer?.cancel();
-        showTimeUpDialogue();
-      }
+        if (whiteTime <= 0 || blackTime <= 0) {
+          timer.cancel();
+          _timer?.cancel();
+          showTimeUpDialogue();
+        }
+      });
     });
   }
 
@@ -208,16 +209,20 @@ class _GameBoardState extends State<GameBoard> {
     board = newBoard();
     selectedPiece = null;
     selectedCord = [-1, -1];
-    valid_moves.clear();
-    isWhiteTurn = true;
     whiteKingCord = [7, 3];
     blackKingCord = [0, 4];
+    whiteTime = CHESS_TIME;
+    blackTime = CHESS_TIME;
+    isWhiteTurn = true;
     isWhiteKingInCheck = false;
     isBlackKingInCheck = false;
+    valid_moves.clear();
     whites_killed.clear();
     blacks_killed.clear();
     whiteKingAttackers.clear();
     blackKingAttackers.clear();
+    _timer?.cancel();
+    setState(() {});
   }
 
   void clearValidMoves() {
@@ -231,21 +236,19 @@ class _GameBoardState extends State<GameBoard> {
   }
 
   void calculateValidMoves() {
-    print('triggered');
     clearValidMoves();
-    print('cleared');
+    print('triggered');
 
-    setState(() {
-      valid_moves = getRealMoves(
-        board,
-        selectedPiece,
-        selectedCord,
-        isWhiteTurn,
-        isWhiteTurn ? whiteKingCord : blackKingCord,
-      );
-    });
+    valid_moves = getRealMoves(
+      board,
+      selectedPiece,
+      selectedCord,
+      isWhiteTurn,
+      isWhiteTurn ? whiteKingCord : blackKingCord,
+    );
 
-    print('set new');
+    print("set moves");
+    setState(() {});
   }
 
   bool isValidMove(int row, int col) {
@@ -258,19 +261,16 @@ class _GameBoardState extends State<GameBoard> {
   }
 
   void checkKingInCheck() {
-    if (isWhiteTurn) {
-      whiteKingAttackers = isKingInCheck(
-        board,
-        whiteKingCord[0],
-        whiteKingCord[1],
-      );
-    } else {
-      blackKingAttackers = isKingInCheck(
-        board,
-        blackKingCord[0],
-        blackKingCord[1],
-      );
-    }
+    whiteKingAttackers = isKingInCheck(
+      board,
+      whiteKingCord[0],
+      whiteKingCord[1],
+    );
+    blackKingAttackers = isKingInCheck(
+      board,
+      blackKingCord[0],
+      blackKingCord[1],
+    );
   }
 
   void updateKingPositionIfNeeded(int row, int col) {

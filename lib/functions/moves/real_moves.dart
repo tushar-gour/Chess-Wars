@@ -18,13 +18,19 @@ bool canMove(
   final ChessPiece? toPiece = board[to[0]][to[1]];
 
   // Simulate move
-  board[from[0]][from[1]] = null;
   board[to[0]][to[1]] = fromPiece!;
+  board[from[0]][from[1]] = null;
+
+  // Update king's position if it's the king that's moving
+  List<int> newKingPosition = List<int>.from(kingPosition);
+  if (fromPiece.type == ChessPieceType.king) {
+    newKingPosition = to;
+  }
 
   final List<List<int>> kingAttackers = isKingInCheck(
     board,
-    kingPosition[0],
-    kingPosition[1],
+    newKingPosition[0],
+    newKingPosition[1],
   );
 
   // change board state back to initial
@@ -59,38 +65,13 @@ List<List<int>> getRealMoves(
   );
 
   if (selectedPiece!.type == ChessPieceType.king) {
-    // for (int i = 0; i < rawMoves.length; i++) {
-    //   if (isKingInAdjacent(board, rawMoves[i], selectedPiece)) {
-    //     rawMoves.removeAt(i);
-    //   }
-    // }
-
-    List<int> indexes = [];
-
-    for (var move in rawMoves) {
-      if (isKingInAdjacent(board, move, selectedPiece)) {
-        int toRemove = getIndexFromMove(move, rawMoves);
-        if (toRemove != -1) indexes.add(toRemove);
-      }
-    }
-
-    List<List<int>> tempRawMoves = [];
-
-    for (int i = 0; i < rawMoves.length; i++) {
-      if (!indexes.contains(i))
-        tempRawMoves.add([rawMoves[i][0], rawMoves[i][1]]);
-    }
-
-    rawMoves = tempRawMoves;
+    rawMoves.removeWhere(
+      (final move) => isKingInAdjacent(board, move, selectedPiece),
+    );
   }
 
-  for (var cord in rawMoves) {
-    if (canMove(
-      board,
-      selectedCord,
-      cord,
-      kingPosition,
-    )) {
+  for (final cord in rawMoves) {
+    if (canMove(board, selectedCord, cord, kingPosition)) {
       realMoves.add(cord);
     }
   }
