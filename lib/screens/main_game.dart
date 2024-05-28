@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:chess/components/dead_piece.dart';
 import 'package:chess/components/piece.dart';
 import 'package:chess/components/tile.dart';
@@ -9,9 +8,8 @@ import 'package:chess/functions/moves/real_moves.dart';
 import 'package:chess/functions/new_board.dart';
 import 'package:chess/functions/two_king_remaining.dart';
 import 'package:chess/values/colors.dart';
+import 'package:chess/values/globals.dart';
 import 'package:flutter/material.dart';
-
-const CHESS_TIME = 1800;
 
 class GameBoard extends StatefulWidget {
   const GameBoard({super.key});
@@ -557,19 +555,6 @@ class _GameBoardState extends State<GameBoard> {
         ),
         itemCount: 8 * 8,
         itemBuilder: (ctx, index) {
-          // final myCord = getTileCoordinates(index);
-          // final myPiece = getPieceFromCoordinates(myCord);
-
-          // return BoardTile(
-          //   isDarkTile: isDarkTile(index),
-          //   piece: myPiece,
-          //   isSelected:
-          //       myCord[0] == selectedCord[0] && myCord[1] == selectedCord[1],
-          //   isKingAttaked: isKingAttackedOrIsAttacker(myCord[0], myCord[1]),
-          //   isInAttack: isPieceInAttack(myCord),
-          //   isValidMove: isValidMove(myCord[0], myCord[1]),
-          //   onTap: () => onTileTap(myCord),
-          // );
           final myCord = getTileCoordinates(index);
           final myPiece = getPieceFromCoordinates(myCord);
 

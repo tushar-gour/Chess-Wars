@@ -1,4 +1,4 @@
-import 'package:chess/main_game.dart';
+import 'package:chess/screens/menu.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -21,7 +21,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: GameBoard(),
+      home: MenuScreen(),
     );
   }
 }

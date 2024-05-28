@@ -1,0 +1,1 @@
+var CHESS_TIME = 1800;
