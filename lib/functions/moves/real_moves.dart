@@ -23,6 +23,7 @@ bool canMove(
 
   // Update king's position if it's the king that's moving
   List<int> newKingPosition = List<int>.from(kingPosition);
+
   if (fromPiece.type == ChessPieceType.king) {
     newKingPosition = to;
   }

@@ -7,6 +7,7 @@ import 'package:chess/functions/helpers.dart';
 import 'package:chess/functions/king_ckeck.dart';
 import 'package:chess/functions/moves/real_moves.dart';
 import 'package:chess/functions/new_board.dart';
+import 'package:chess/functions/two_king_remaining.dart';
 import 'package:chess/values/colors.dart';
 import 'package:flutter/material.dart';
 
@@ -100,6 +101,60 @@ class _GameBoardState extends State<GameBoard> {
           title: Center(
             child: Text(
               "TIME UP !!",
+              style: TextStyle(
+                color: lightTileColor,
+                fontFamily: "Changa",
+              ),
+            ),
+          ),
+          content: InkWell(
+            onTap: () {
+              Navigator.pop(context);
+              _initializeBoard();
+            },
+            child: Ink(
+              width: 150,
+              height: 40,
+              decoration: BoxDecoration(
+                color: darkTileColor,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Center(
+                child: Text(
+                  'New Game',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontFamily: "Changa",
+                    fontSize: 20,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void showTieDialogue() {
+    showDialog(
+      context: context,
+      builder: (context) => Container(
+        decoration: BoxDecoration(
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.25),
+              spreadRadius: 5,
+              blurRadius: 7,
+              offset: Offset(0, 3),
+            ),
+          ],
+        ),
+        child: AlertDialog(
+          backgroundColor: dialogueColor,
+          title: Center(
+            child: Text(
+              "!! TIE !!",
               style: TextStyle(
                 color: lightTileColor,
                 fontFamily: "Changa",
@@ -237,7 +292,6 @@ class _GameBoardState extends State<GameBoard> {
 
   void calculateValidMoves() {
     clearValidMoves();
-    print('triggered');
 
     valid_moves = getRealMoves(
       board,
@@ -247,7 +301,6 @@ class _GameBoardState extends State<GameBoard> {
       isWhiteTurn ? whiteKingCord : blackKingCord,
     );
 
-    print("set moves");
     setState(() {});
   }
 
@@ -280,6 +333,12 @@ class _GameBoardState extends State<GameBoard> {
       } else {
         blackKingCord = [row, col];
       }
+    }
+  }
+
+  void checkIfRemainingAreKings() {
+    if (isKingsRemaining(board)) {
+      showTieDialogue();
     }
   }
 
@@ -326,6 +385,7 @@ class _GameBoardState extends State<GameBoard> {
             isWhiteTurn = !isWhiteTurn;
             checkKingInCheck();
             removeSelectedPiece();
+            checkIfRemainingAreKings();
           }
         } else if (piece.isWhite == isWhiteTurn) {
           // Select a piece
@@ -347,16 +407,20 @@ class _GameBoardState extends State<GameBoard> {
     });
   }
 
-  bool isKingAttacker(int row, int col) {
-    if (whiteKingAttackers.isNotEmpty)
+  bool isKingAttackedOrIsAttacker(int row, int col) {
+    if (whiteKingAttackers.isEmpty && blackKingAttackers.isEmpty) return false;
+
+    if (whiteKingAttackers.isNotEmpty) {
       for (var pair in whiteKingAttackers) {
         if (pair[0] == row && pair[1] == col) return true;
       }
+    }
 
-    if (blackKingAttackers.isNotEmpty)
+    if (blackKingAttackers.isNotEmpty) {
       for (var pair in blackKingAttackers) {
         if (pair[0] == row && pair[1] == col) return true;
       }
+    }
 
     return false;
   }
@@ -493,17 +557,45 @@ class _GameBoardState extends State<GameBoard> {
         ),
         itemCount: 8 * 8,
         itemBuilder: (ctx, index) {
+          // final myCord = getTileCoordinates(index);
+          // final myPiece = getPieceFromCoordinates(myCord);
+
+          // return BoardTile(
+          //   isDarkTile: isDarkTile(index),
+          //   piece: myPiece,
+          //   isSelected:
+          //       myCord[0] == selectedCord[0] && myCord[1] == selectedCord[1],
+          //   isKingAttaked: isKingAttackedOrIsAttacker(myCord[0], myCord[1]),
+          //   isInAttack: isPieceInAttack(myCord),
+          //   isValidMove: isValidMove(myCord[0], myCord[1]),
+          //   onTap: () => onTileTap(myCord),
+          // );
           final myCord = getTileCoordinates(index);
           final myPiece = getPieceFromCoordinates(myCord);
+
+          bool isSelected =
+              myCord[0] == selectedCord[0] && myCord[1] == selectedCord[1];
+          bool validMove = valid_moves
+              .any((pair) => pair[0] == myCord[0] && pair[1] == myCord[1]);
+
+          bool isInAttack = validMove &&
+              board[myCord[0]][myCord[1]] != null &&
+              board[myCord[0]][myCord[1]]!.isWhite == !isWhiteTurn;
+
+          bool isKingAttacked =
+              myPiece != null && myPiece.type == ChessPieceType.king
+                  ? (myPiece.isWhite
+                      ? whiteKingAttackers.isNotEmpty
+                      : blackKingAttackers.isNotEmpty)
+                  : isKingAttackedOrIsAttacker(myCord[0], myCord[1]);
 
           return BoardTile(
             isDarkTile: isDarkTile(index),
             piece: myPiece,
-            isSelected:
-                myCord[0] == selectedCord[0] && myCord[1] == selectedCord[1],
-            isKingAttaked: isKingAttacker(myCord[0], myCord[1]),
-            isInAttack: isPieceInAttack(myCord),
-            isValidMove: isValidMove(myCord[0], myCord[1]),
+            isSelected: isSelected,
+            isKingAttaked: isKingAttacked,
+            isInAttack: isInAttack,
+            isValidMove: validMove,
             onTap: () => onTileTap(myCord),
           );
         },
