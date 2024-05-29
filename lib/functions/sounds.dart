@@ -1,9 +1,8 @@
 import 'package:audioplayers/audioplayers.dart';
 
-Future<void> playTileTapSound() async {
-  final player = AudioPlayer();
-  final audioPath = 'assets/audio/tap.mp3';
+final player = AudioPlayer();
 
+Future<void> playSound(String audioPath) async {
   await player.play(
     AssetSource(audioPath),
   );

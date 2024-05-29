@@ -77,13 +77,13 @@ class _GameBoardState extends State<GameBoard> {
         if (whiteTime <= 0 || blackTime <= 0) {
           timer.cancel();
           _timer?.cancel();
-          showTimeUpDialogue();
+          showTimeUpDialog();
         }
       });
     });
   }
 
-  void showTimeUpDialogue() {
+  void showTimeUpDialog() {
     showDialog(
       context: context,
       builder: (context) => Container(
@@ -137,7 +137,7 @@ class _GameBoardState extends State<GameBoard> {
     );
   }
 
-  void showTieDialogue() {
+  void showTieDialog() {
     showDialog(
       context: context,
       builder: (context) => Container(
@@ -261,7 +261,7 @@ class _GameBoardState extends State<GameBoard> {
     );
   }
 
-  void showResetDialogue() {
+  void showResetDialog() {
     showDialog(
       context: context,
       builder: (context) => Container(
@@ -327,11 +327,70 @@ class _GameBoardState extends State<GameBoard> {
     );
   }
 
+  void showReviveDialog(int row, int col) {
+    final deadPieces = isWhiteTurn
+        ? canReviveDeadPieces(whites_killed)
+        : canReviveDeadPieces(blacks_killed);
+
+    showDialog(
+      context: context,
+      builder: (context) => Container(
+        decoration: BoxDecoration(
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.25),
+              spreadRadius: 5,
+              blurRadius: 7,
+              offset: Offset(0, 3),
+            ),
+          ],
+        ),
+        child: AlertDialog(
+          backgroundColor: dialogueColor,
+          content: Column(
+            children: [
+              Text(
+                'Tap on a piece to revive:',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontFamily: "Changa",
+                  fontSize: 20,
+                ),
+              ),
+              SizedBox(height: 20),
+              SizedBox(
+                width: 300,
+                height: 100,
+                child: GridView.builder(
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 4,
+                  ),
+                  itemCount: deadPieces.length,
+                  itemBuilder: (ctx, index) => DeadPiece(
+                    imagePath: deadPieces[index].imagePath,
+                    isWhite: deadPieces[index].isWhite,
+                    canFlip: false,
+                    onTap: () {
+                      Navigator.pop(context);
+                      onRevive(row, col, deadPieces[index]);
+                    },
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   ChessPiece? getPieceFromCoordinates(List<int> coordinates) {
     return board[coordinates[0]][coordinates[1]];
   }
 
   void _initializeBoard() {
+    playSound('sounds/gameStart.mp3');
     board = newBoard();
     selectedPiece = null;
     selectedCord = [-1, -1];
@@ -409,13 +468,67 @@ class _GameBoardState extends State<GameBoard> {
 
   void checkGameOver() {
     if (isKingsRemaining(board)) {
-      showTieDialogue();
+      showTieDialog();
     } else if (isCheckmate(
       board,
       isWhiteTurn,
       isWhiteTurn ? whiteKingCord : blackKingCord,
     )) {
       showCheckmateDialog();
+    }
+  }
+
+  void onRevive(int row, int col, ChessPiece revivedPiece) {
+    setState(() {
+      board[row][col] = revivedPiece;
+      updateOtherStuffs();
+    });
+  }
+
+  List<ChessPiece> canReviveDeadPieces(List<ChessPiece> deadPieces) {
+    List<ChessPiece> canRevive = [];
+
+    for (var piece in deadPieces) {
+      if (piece.type != ChessPieceType.pawn) canRevive.add(piece);
+    }
+
+    return canRevive;
+  }
+
+  bool canRevive(int row, int col) {
+    final ChessPiece? piece = board[row][col];
+
+    if (piece!.type == ChessPieceType.pawn) {
+      if ((isWhiteTurn &&
+              canReviveDeadPieces(whites_killed).length > 0 &&
+              piece.isWhite &&
+              row == 0) ||
+          (!isWhiteTurn &&
+              canReviveDeadPieces(blacks_killed).length > 0 &&
+              !piece.isWhite &&
+              row == 7)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  void updateOtherStuffs() {
+    isWhiteTurn = !isWhiteTurn;
+    checkKingInCheck();
+    removeSelectedPiece();
+    checkGameOver();
+  }
+
+  void updateMovedPiece(int row, int col) {
+    board[row][col] = selectedPiece;
+    board[selectedCord[0]][selectedCord[1]] = null;
+    updateKingPositionIfNeeded(row, col);
+    if (canRevive(row, col)) {
+      showReviveDialog(row, col);
+    } else {
+      updateOtherStuffs();
     }
   }
 
@@ -444,7 +557,6 @@ class _GameBoardState extends State<GameBoard> {
     final row = tileCoordinates[0];
     final col = tileCoordinates[1];
     final piece = getPieceFromCoordinates(tileCoordinates);
-    playTileTapSound();
 
     setState(() {
       if (piece != null) {
@@ -456,14 +568,9 @@ class _GameBoardState extends State<GameBoard> {
             calculateValidMoves();
           } else if (isValidMove(row, col)) {
             // Capture the piece
+            playSound('sounds/capture.mp3');
             (piece.isWhite ? whites_killed : blacks_killed).add(piece);
-            board[row][col] = selectedPiece;
-            board[selectedCord[0]][selectedCord[1]] = null;
-            updateKingPositionIfNeeded(row, col);
-            isWhiteTurn = !isWhiteTurn;
-            checkKingInCheck();
-            removeSelectedPiece();
-            checkGameOver();
+            updateMovedPiece(row, col);
           }
         } else if (piece.isWhite == isWhiteTurn) {
           // Select a piece
@@ -473,13 +580,8 @@ class _GameBoardState extends State<GameBoard> {
         }
       } else if (selectedPiece != null && isValidMove(row, col)) {
         // Move the piece
-        board[row][col] = selectedPiece;
-        board[selectedCord[0]][selectedCord[1]] = null;
-        updateKingPositionIfNeeded(row, col);
-        isWhiteTurn = !isWhiteTurn;
-        checkKingInCheck();
-        removeSelectedPiece();
-        checkGameOver();
+        playSound('sounds/move.mp3');
+        updateMovedPiece(row, col);
       } else {
         removeSelectedPiece();
       }
@@ -521,7 +623,7 @@ class _GameBoardState extends State<GameBoard> {
           backgroundColor: appBarColor,
           actions: [
             IconButton(
-              onPressed: showResetDialogue,
+              onPressed: showResetDialog,
               icon: Icon(Icons.replay, color: Colors.white),
             ),
           ],
@@ -574,6 +676,8 @@ class _GameBoardState extends State<GameBoard> {
         itemBuilder: (ctx, index) => DeadPiece(
           imagePath: deadPieces[index].imagePath,
           isWhite: deadPieces[index].isWhite,
+          canFlip: true,
+          onTap: null,
         ),
       ),
     );
